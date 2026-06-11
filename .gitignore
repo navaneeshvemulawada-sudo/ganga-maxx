@@ -1,0 +1,36 @@
+# Dependency directories
+node_modules/
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+
+# Python Caches & Compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Private environment files
+.env
+.env.local
+.env.*.local
+
+# Production Build outputs
+dist/
+build/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# SQLite Local Databases & runtime instances
+*.db
+instance/
+backend/instance/
