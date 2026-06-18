@@ -40,6 +40,22 @@ export default function Register() {
 
       if (sbError) throw sbError;
 
+      // Create profile in public.users table
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([{
+            supabase_uid: data.user.id,
+            full_name: username,
+            email: email,
+            role: role,
+            status: 'Active'
+          }]);
+        if (profileError) {
+          console.error('Error creating profile in users table:', profileError.message);
+        }
+      }
+
       // Force sign out to prevent auto-login
       await supabase.auth.signOut();
       localStorage.removeItem('token');
