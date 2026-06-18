@@ -27,11 +27,21 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'online',
-    message: 'Ganga Maxx Node.js API backend is active'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    const db = require('./config/database');
+    await db.query('SELECT 1');
+    res.json({
+      status: 'online',
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('[Health Check Error] Database query failed:', error.message);
+    res.status(500).json({
+      status: 'online',
+      database: 'disconnected'
+    });
+  }
 });
 
 // 404 handler for unmatched routes

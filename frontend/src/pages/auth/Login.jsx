@@ -65,12 +65,17 @@ export default function Login() {
           throw profileError;
         }
 
-        // If profile exists and is not approved, sign out and reject
-        if (profile && !profile.is_approved) {
-          await supabase.auth.signOut();
-          setError('Your account is pending administrator approval.');
-          setLoading(false);
-          return;
+        // Determine user role (profile role or metadata role)
+        const userRole = profile ? profile.role : (data.user.user_metadata?.role || 'client');
+        const requiresApproval = ['operations', 'supervisor', 'admin'].includes(String(userRole).toLowerCase());
+
+        if (requiresApproval) {
+          if (!profile || !profile.is_approved) {
+            await supabase.auth.signOut();
+            setError('Your account is pending administrator approval.');
+            setLoading(false);
+            return;
+          }
         }
 
         localStorage.setItem('token', data.session.access_token);
@@ -78,7 +83,7 @@ export default function Login() {
           id: profile ? profile.id : data.user.id,
           username: profile ? profile.full_name : data.user.email.split('@')[0],
           email: data.user.email,
-          role: profile ? profile.role : (data.user.user_metadata?.role || 'admin'),
+          role: userRole,
           is_approved: profile ? profile.is_approved : true
         }));
       }

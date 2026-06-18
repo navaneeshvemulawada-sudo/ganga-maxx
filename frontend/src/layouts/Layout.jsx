@@ -31,14 +31,19 @@ export default function Layout() {
             throw profileError;
           }
 
-          // If the profile exists and is not approved, sign out immediately
-          if (profile && !profile.is_approved) {
-            await supabase.auth.signOut();
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setSession(null);
-            navigate('/login', { state: { message: 'Your account is pending admin approval.' } });
-            return;
+          // Determine user role (profile role or metadata role)
+          const userRole = profile ? profile.role : (currentSession.user.user_metadata?.role || 'client');
+          const requiresApproval = ['operations', 'supervisor', 'admin'].includes(String(userRole).toLowerCase());
+
+          if (requiresApproval) {
+            if (!profile || !profile.is_approved) {
+              await supabase.auth.signOut();
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              setSession(null);
+              navigate('/login', { state: { message: 'Your account is pending admin approval.' } });
+              return;
+            }
           }
 
           // Keep local storage items in sync
@@ -47,7 +52,7 @@ export default function Layout() {
             id: profile ? profile.id : currentSession.user.id,
             username: profile ? profile.full_name : currentSession.user.email.split('@')[0],
             email: currentSession.user.email,
-            role: profile ? profile.role : (currentSession.user.user_metadata?.role || 'admin'),
+            role: userRole,
             is_approved: profile ? profile.is_approved : true
           }));
         }

@@ -1,4 +1,4 @@
-const db = require('../config/db');
+const db = require('../config/database');
 const crypto = require('crypto');
 
 function base64urlEncode(str) {
@@ -38,9 +38,9 @@ const authController = {
         return res.status(400).json({ error: 'Missing credentials' });
       }
 
-      // Query user from MySQL
-      const [rows] = await db.query(
-        'SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1',
+      // Query user from PostgreSQL
+      const { rows } = await db.query(
+        'SELECT * FROM users WHERE username = $1 OR email = $2 LIMIT 1',
         [usernameOrEmail, usernameOrEmail]
       );
 
@@ -98,9 +98,9 @@ const authController = {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
-      // Check if username or email already exists in MySQL
-      const [existingUsers] = await db.query(
-        'SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1',
+      // Check if username or email already exists in PostgreSQL
+      const { rows: existingUsers } = await db.query(
+        'SELECT * FROM users WHERE username = $1 OR email = $2 LIMIT 1',
         [username, email]
       );
 
@@ -119,18 +119,15 @@ const authController = {
       
       // Enforce approval gate (clients & distributors are auto-approved, staff roles require admin sign-off)
       const userRole = role || 'client';
-      let isApproved = 1;
-      if (['operations', 'supervisor', 'admin'].includes(userRole)) {
-        isApproved = 0;
-      }
+      const isApproved = !['operations', 'supervisor', 'admin'].includes(userRole.toLowerCase());
 
-      // Insert into MySQL users table
-      const [result] = await db.query(
-        'INSERT INTO users (username, email, password_hash, role, is_approved) VALUES (?, ?, ?, ?, ?)',
+      // Insert into PostgreSQL users table and return the generated serial ID
+      const result = await db.query(
+        'INSERT INTO users (username, email, password_hash, role, is_approved) VALUES ($1, $2, $3, $4, $5) RETURNING id',
         [username, email, hashedPassword, userRole, isApproved]
       );
 
-      const newUserId = result.insertId;
+      const newUserId = result.rows[0].id;
 
       return res.status(201).json({
         message: 'User registered successfully',
@@ -139,7 +136,7 @@ const authController = {
           username: username,
           email: email,
           role: userRole,
-          is_approved: !!isApproved
+          is_approved: isApproved
         }
       });
     } catch (error) {
@@ -150,7 +147,7 @@ const authController = {
 
   async listUsers(req, res) {
     try {
-      const [rows] = await db.query('SELECT id, username, email, role, is_approved, created_at FROM users');
+      const { rows } = await db.query('SELECT id, username, email, role, is_approved, created_at FROM users');
       return res.status(200).json(rows);
     } catch (error) {
       console.error('[Auth Controller Error] listUsers failed:', error);
@@ -161,7 +158,7 @@ const authController = {
   async approveUser(req, res) {
     try {
       const { id } = req.params;
-      await db.query('UPDATE users SET is_approved = 1 WHERE id = ?', [id]);
+      await db.query('UPDATE users SET is_approved = true WHERE id = $1', [id]);
       return res.status(200).json({ message: 'User approved successfully' });
     } catch (error) {
       console.error('[Auth Controller Error] approveUser failed:', error);

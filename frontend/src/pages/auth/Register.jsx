@@ -57,6 +57,7 @@ export default function Register() {
           }]);
         if (profileError) {
           console.error('Error creating profile in users table:', profileError.message);
+          throw new Error('Profile creation failed: ' + profileError.message);
         }
       }
 

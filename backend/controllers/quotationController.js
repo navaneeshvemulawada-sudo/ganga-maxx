@@ -122,7 +122,7 @@ const quotationController = {
         status: 'Generated'
       };
 
-      // 5. Save quotation to MySQL database (triggers transaction & auto-id generation)
+      // 5. Save quotation to PostgreSQL database (triggers transaction & auto-id generation)
       const quote_id = await QuotationModel.create(quotationData);
       
       // Update object with generated quote_id
@@ -155,9 +155,8 @@ const quotationController = {
    */
   async listQuotations(req, res) {
     try {
-      const db = require('../config/db');
-      const [rows] = await db.query('SELECT * FROM quotations ORDER BY id DESC');
-      // Map and format response to align with model schemas if needed
+      const db = require('../config/database');
+      const { rows } = await db.query('SELECT * FROM quotations ORDER BY id DESC');
       return res.status(200).json(rows);
     } catch (error) {
       console.error('[Controller Error] Error in listQuotations:', error);
@@ -174,18 +173,18 @@ const quotationController = {
    */
   async getQuotationById(req, res) {
     try {
-      const db = require('../config/db');
+      const db = require('../config/database');
       const { id } = req.params;
       
-      let query = 'SELECT * FROM quotations WHERE quote_id = ? LIMIT 1';
+      let query = 'SELECT * FROM quotations WHERE quote_id = $1 LIMIT 1';
       let params = [id];
 
       if (/^\d+$/.test(String(id))) {
-        query = 'SELECT * FROM quotations WHERE id = ? LIMIT 1';
+        query = 'SELECT * FROM quotations WHERE id = $1 LIMIT 1';
         params = [parseInt(id, 10)];
       }
 
-      const [rows] = await db.query(query, params);
+      const { rows } = await db.query(query, params);
 
       if (rows.length === 0) {
         return res.status(404).json({
@@ -210,7 +209,7 @@ const quotationController = {
    */
   async processQuotation(req, res) {
     try {
-      const db = require('../config/db');
+      const db = require('../config/database');
       const { id, quote_id, status } = req.body;
       
       const targetId = id || quote_id;
@@ -224,15 +223,15 @@ const quotationController = {
       }
 
       // Check if quotation exists safely without type coercion errors
-      let checkQuery = 'SELECT * FROM quotations WHERE quote_id = ? LIMIT 1';
+      let checkQuery = 'SELECT * FROM quotations WHERE quote_id = $1 LIMIT 1';
       let checkParams = [targetId];
 
       if (/^\d+$/.test(String(targetId))) {
-        checkQuery = 'SELECT * FROM quotations WHERE id = ? LIMIT 1';
+        checkQuery = 'SELECT * FROM quotations WHERE id = $1 LIMIT 1';
         checkParams = [parseInt(targetId, 10)];
       }
 
-      const [checkRows] = await db.query(checkQuery, checkParams);
+      const { rows: checkRows } = await db.query(checkQuery, checkParams);
 
       if (checkRows.length === 0) {
         return res.status(404).json({
@@ -242,11 +241,11 @@ const quotationController = {
       }
 
       // Update quotation status in database safely
-      let updateQuery = 'UPDATE quotations SET status = ? WHERE quote_id = ?';
+      let updateQuery = 'UPDATE quotations SET status = $1 WHERE quote_id = $2';
       let updateParams = [targetStatus, targetId];
 
       if (/^\d+$/.test(String(targetId))) {
-        updateQuery = 'UPDATE quotations SET status = ? WHERE id = ?';
+        updateQuery = 'UPDATE quotations SET status = $1 WHERE id = $2';
         updateParams = [targetStatus, parseInt(targetId, 10)];
       }
 

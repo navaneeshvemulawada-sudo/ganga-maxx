@@ -1,13 +1,15 @@
-const db = require('../config/db');
+const db = require('../config/database');
 
 const QuotationModel = {
   /**
    * Generates the next quote ID (e.g. QT001, QT002, ...)
-   * Assumes it's being executed within an active transaction with a connection.
+   * Assumes it's being executed within an active transaction with a client.
+   * 
+   * @param {Object} client - pg pool client
    */
-  async generateNextQuoteId(connection) {
+  async generateNextQuoteId(client) {
     // Select the latest quote_id and lock the row to prevent concurrent duplicate generation
-    const [rows] = await connection.query(
+    const { rows } = await client.query(
       'SELECT quote_id FROM quotations ORDER BY id DESC LIMIT 1 FOR UPDATE'
     );
 
@@ -30,21 +32,23 @@ const QuotationModel = {
 
   /**
    * Creates a new quotation record using a database transaction
+   * 
+   * @param {Object} data - Quotation schema data
    */
   async create(data) {
-    const connection = await db.getConnection();
+    const client = await db.pool.connect();
     try {
-      await connection.beginTransaction();
+      await client.query('BEGIN');
 
       // Automatically generate sequential quote_id inside transaction
-      const quote_id = await this.generateNextQuoteId(connection);
+      const quote_id = await this.generateNextQuoteId(client);
       
       const query = `
         INSERT INTO quotations (
           quote_id, customer_name, company_name, email, phone, 
           institution_type, floors, staff_count, cleaning_frequency, 
           monthly_cost, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       `;
       
       const values = [
@@ -61,15 +65,15 @@ const QuotationModel = {
         data.status || 'Generated'
       ];
 
-      await connection.query(query, values);
-      await connection.commit();
+      await client.query(query, values);
+      await client.query('COMMIT');
       
       return quote_id;
     } catch (error) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       throw error;
     } finally {
-      connection.release();
+      client.release();
     }
   }
 };
