@@ -54,13 +54,32 @@ export default function Login() {
       if (sbError) throw sbError;
 
       if (data.session) {
+        // Query public.users table to check approval status
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', data.user.email)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          throw profileError;
+        }
+
+        // If profile exists and is not approved, sign out and reject
+        if (profile && !profile.is_approved) {
+          await supabase.auth.signOut();
+          setError('Your account is pending administrator approval.');
+          setLoading(false);
+          return;
+        }
+
         localStorage.setItem('token', data.session.access_token);
         localStorage.setItem('user', JSON.stringify({
-          id: data.user.id,
-          username: data.user.email.split('@')[0],
+          id: profile ? profile.id : data.user.id,
+          username: profile ? profile.full_name : data.user.email.split('@')[0],
           email: data.user.email,
-          role: data.user.user_metadata?.role || 'admin',
-          is_approved: true
+          role: profile ? profile.role : (data.user.user_metadata?.role || 'admin'),
+          is_approved: profile ? profile.is_approved : true
         }));
       }
 

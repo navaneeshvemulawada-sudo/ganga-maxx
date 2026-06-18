@@ -20,17 +20,36 @@ export default function Layout() {
           localStorage.removeItem('user');
           navigate('/login');
         } else {
-          // Keep local storage items in sync
-          if (!localStorage.getItem('token')) {
-            localStorage.setItem('token', currentSession.access_token);
-            localStorage.setItem('user', JSON.stringify({
-              id: currentSession.user.id,
-              username: currentSession.user.email.split('@')[0],
-              email: currentSession.user.email,
-              role: currentSession.user.user_metadata?.role || 'admin',
-              is_approved: true
-            }));
+          // Query public.users table to check approval status
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', currentSession.user.email)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            throw profileError;
           }
+
+          // If the profile exists and is not approved, sign out immediately
+          if (profile && !profile.is_approved) {
+            await supabase.auth.signOut();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setSession(null);
+            navigate('/login', { state: { message: 'Your account is pending admin approval.' } });
+            return;
+          }
+
+          // Keep local storage items in sync
+          localStorage.setItem('token', currentSession.access_token);
+          localStorage.setItem('user', JSON.stringify({
+            id: profile ? profile.id : currentSession.user.id,
+            username: profile ? profile.full_name : currentSession.user.email.split('@')[0],
+            email: currentSession.user.email,
+            role: profile ? profile.role : (currentSession.user.user_metadata?.role || 'admin'),
+            is_approved: profile ? profile.is_approved : true
+          }));
         }
       } catch (err) {
         console.error('Session check error:', err);

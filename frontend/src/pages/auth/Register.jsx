@@ -40,6 +40,9 @@ export default function Register() {
 
       if (sbError) throw sbError;
 
+      const requiresApproval = ['operations', 'supervisor', 'admin', 'Operations', 'Supervisor', 'Admin'].includes(role);
+      const isApproved = !requiresApproval;
+
       // Create profile in public.users table
       if (data.user) {
         const { error: profileError } = await supabase
@@ -49,7 +52,8 @@ export default function Register() {
             full_name: username,
             email: email,
             role: role,
-            status: 'Active'
+            status: isApproved ? 'Active' : 'Pending',
+            is_approved: isApproved
           }]);
         if (profileError) {
           console.error('Error creating profile in users table:', profileError.message);
@@ -61,9 +65,9 @@ export default function Register() {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 
-      const message = data.session 
+      const message = isApproved
         ? 'Account registered successfully! Please sign in using your credentials.'
-        : 'Check your email and confirm your account before logging in.';
+        : 'Account registered successfully! Your account is pending admin approval before you can log in.';
       
       setSuccess(message + ' Redirecting to sign in...');
       setTimeout(() => {

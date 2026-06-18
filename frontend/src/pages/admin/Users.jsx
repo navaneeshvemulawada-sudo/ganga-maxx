@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Users, ShieldAlert, Check, ShieldCheck, Loader2 } from 'lucide-react';
 import api from '../../services/api';
+import { supabase } from '../../supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 
 export default function AdminUsers() {
   const [usersList, setUsersList] = useState([]);
@@ -26,9 +28,13 @@ export default function AdminUsers() {
     try {
       setLoading(true);
       setFetchError('');
-      const data = await api.apiCall('/api/auth/users');
-      // Sort users by ID ascending
-      setUsersList(data.sort((a, b) => a.id - b.id));
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+      setUsersList(data);
     } catch (err) {
       console.error('Failed to fetch users:', err);
       setFetchError(err.message || 'Failed to load user accounts.');
@@ -54,12 +60,45 @@ export default function AdminUsers() {
 
     try {
       setRegistering(true);
-      await api.apiCall('/api/auth/register', {
-        method: 'POST',
-        body: userForm
+
+      // Create a temporary Supabase client with persistSession: false
+      // so it does NOT log out the currently logged in Admin!
+      const SUPABASE_URL = "https://tdxkhkrcmnkspxmutzpb.supabase.co";
+      const SUPABASE_PUBLIC_KEY = "sb_publishable_yhuyRf4TBy_Aym_aPOeAxw_03srgz2h";
+      const tempSupabase = createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {
+        auth: { persistSession: false }
       });
-      
-      const needsApproval = ['operations', 'supervisor', 'distributor'].includes(userForm.role);
+
+      const { data, error: sbError } = await tempSupabase.auth.signUp({
+        email: userForm.email,
+        password: userForm.password,
+        options: {
+          data: {
+            role: userForm.role,
+            username: userForm.username
+          }
+        }
+      });
+
+      if (sbError) throw sbError;
+
+      const needsApproval = ['operations', 'supervisor', 'admin'].includes(userForm.role);
+      const isApproved = !needsApproval;
+
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([{
+            supabase_uid: data.user.id,
+            full_name: userForm.username,
+            email: userForm.email,
+            role: userForm.role,
+            status: isApproved ? 'Active' : 'Pending',
+            is_approved: isApproved
+          }]);
+        
+        if (profileError) throw profileError;
+      }
       
       if (needsApproval) {
         setRegisterSuccess(`Account for ${userForm.username} created successfully! Marked as Pending Admin Approval.`);
@@ -78,9 +117,12 @@ export default function AdminUsers() {
 
   const handleApproveUser = async (userId) => {
     try {
-      await api.apiCall(`/api/auth/users/${userId}/approve`, {
-        method: 'PUT'
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({ is_approved: true, status: 'Active' })
+        .eq('id', userId);
+
+      if (error) throw error;
       fetchUsers();
     } catch (err) {
       alert('Failed to approve user: ' + err.message);
