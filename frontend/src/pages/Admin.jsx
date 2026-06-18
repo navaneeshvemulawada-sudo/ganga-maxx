@@ -17,7 +17,7 @@ export default function Admin() {
 
   // User form state
   const [userForm, setUserForm] = useState({
-    username: '',
+    full_name: '',
     email: '',
     role: 'customer',
     password: ''
@@ -65,7 +65,7 @@ export default function Admin() {
     setRegisterSuccess('');
     setRegisterError('');
 
-    if (!userForm.username || !userForm.email || !userForm.password) {
+    if (!userForm.full_name || !userForm.email || !userForm.password) {
       setRegisterError('All fields are required.');
       return;
     }
@@ -81,7 +81,7 @@ export default function Admin() {
       // Add newly registered user to list
       const newUser = response.user || { 
         id: usersList.length + 1, 
-        username: userForm.username, 
+        username: userForm.full_name, 
         email: userForm.email, 
         role: userForm.role 
       };
@@ -90,7 +90,7 @@ export default function Admin() {
       
       // Clear form
       setUserForm({
-        username: '',
+        full_name: '',
         email: '',
         role: 'customer',
         password: ''
@@ -262,14 +262,14 @@ export default function Admin() {
 
             <form onSubmit={handleRegisterUser} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Username</label>
+                <label className="form-label">Full Name</label>
                 <input
                   type="text"
-                  name="username"
+                  name="full_name"
                   className="form-input"
-                  placeholder="e.g. sales_lead"
+                  placeholder="e.g. John Doe"
                   style={{ height: '36px', fontSize: '0.8125rem' }}
-                  value={userForm.username}
+                  value={userForm.full_name}
                   onChange={handleUserInputChange}
                 />
               </div>

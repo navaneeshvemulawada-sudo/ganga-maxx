@@ -29,23 +29,25 @@ function hashPassword(password) {
 }
 
 const authController = {
+  /**
+   * Handles user login using email and password.
+   */
   async login(req, res) {
     try {
-      const { username, password } = req.body;
-      const usernameOrEmail = username;
+      const { email, password } = req.body;
 
-      if (!usernameOrEmail || !password) {
-        return res.status(400).json({ error: 'Missing credentials' });
+      if (!email || !password) {
+        return res.status(400).json({ success: false, error: 'Missing credentials' });
       }
 
-      // Query user from PostgreSQL
+      // Query user from PostgreSQL by email only (no username column exists)
       const { rows } = await db.query(
-        'SELECT * FROM users WHERE username = $1 OR email = $2 LIMIT 1',
-        [usernameOrEmail, usernameOrEmail]
+        'SELECT * FROM users WHERE email = $1 LIMIT 1',
+        [email.trim()]
       );
 
       if (rows.length === 0) {
-        return res.status(401).json({ error: 'Invalid username/email or password' });
+        return res.status(401).json({ success: false, error: 'Invalid email or password' });
       }
 
       const user = rows[0];
@@ -53,11 +55,12 @@ const authController = {
       // Verify password
       const isValid = verifyPassword(password, user.password_hash);
       if (!isValid) {
-        return res.status(401).json({ error: 'Invalid username/email or password' });
+        return res.status(401).json({ success: false, error: 'Invalid email or password' });
       }
 
+      // Check approval status for staff roles
       if (!user.is_approved) {
-        return res.status(403).json({ error: 'Your account is pending administrator approval.' });
+        return res.status(403).json({ success: false, error: 'Your account is pending administrator approval.' });
       }
 
       // Generate JWT token
@@ -65,7 +68,7 @@ const authController = {
       const expires = 86400; // 24 hours
       const payload = {
         sub: user.id,
-        username: user.username,
+        email: user.email,
         role: user.role,
         exp: Math.floor(Date.now() / 1000) + expires
       };
@@ -73,45 +76,40 @@ const authController = {
       const token = generateToken(payload, secret);
 
       return res.status(200).json({
-        message: 'Login successful',
+        success: true,
         token: token,
         user: {
-          id: user.id,
-          username: user.username,
+          id: parseInt(user.id, 10),
+          full_name: user.full_name,
           email: user.email,
-          role: user.role,
-          is_approved: !!user.is_approved,
-          created_at: user.created_at
+          role: user.role
         }
       });
     } catch (error) {
       console.error('[Auth Controller Error] login failed:', error);
-      return res.status(500).json({ error: 'An internal server error occurred' });
+      return res.status(500).json({ success: false, error: 'An internal server error occurred' });
     }
   },
 
+  /**
+   * Handles registering a new user with full_name, email, password, and role.
+   */
   async register(req, res) {
     try {
-      const { username, email, password, role } = req.body;
+      const { full_name, email, password, role } = req.body;
 
-      if (!username || !email || !password) {
-        return res.status(400).json({ error: 'Missing required fields' });
+      if (!full_name || !email || !password) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
       }
 
-      // Check if username or email already exists in PostgreSQL
+      // Check if email already exists in PostgreSQL
       const { rows: existingUsers } = await db.query(
-        'SELECT * FROM users WHERE username = $1 OR email = $2 LIMIT 1',
-        [username, email]
+        'SELECT * FROM users WHERE email = $1 LIMIT 1',
+        [email.trim()]
       );
 
       if (existingUsers.length > 0) {
-        const existingUser = existingUsers[0];
-        if (existingUser.username === username) {
-          return res.status(400).json({ error: 'Username already exists' });
-        }
-        if (existingUser.email === email) {
-          return res.status(400).json({ error: 'Email already exists' });
-        }
+        return res.status(400).json({ success: false, error: 'Email already exists' });
       }
 
       // Hash password
@@ -122,47 +120,45 @@ const authController = {
       const isApproved = !['operations', 'supervisor', 'admin'].includes(userRole.toLowerCase());
 
       // Insert into PostgreSQL users table and return the generated serial ID
-      const result = await db.query(
-        'INSERT INTO users (username, email, password_hash, role, is_approved) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-        [username, email, hashedPassword, userRole, isApproved]
+      await db.query(
+        'INSERT INTO users (full_name, email, password_hash, role, is_approved) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [full_name.trim(), email.trim(), hashedPassword, userRole, isApproved]
       );
 
-      const newUserId = result.rows[0].id;
-
       return res.status(201).json({
-        message: 'User registered successfully',
-        user: {
-          id: newUserId,
-          username: username,
-          email: email,
-          role: userRole,
-          is_approved: isApproved
-        }
+        success: true,
+        message: 'User registered successfully'
       });
     } catch (error) {
       console.error('[Auth Controller Error] register failed:', error);
-      return res.status(500).json({ error: 'An internal server error occurred' });
+      return res.status(500).json({ success: false, error: 'An internal server error occurred' });
     }
   },
 
+  /**
+   * Returns a list of all registered users.
+   */
   async listUsers(req, res) {
     try {
-      const { rows } = await db.query('SELECT id, username, email, role, is_approved, created_at FROM users');
+      const { rows } = await db.query('SELECT id, full_name, email, role, is_approved, created_at FROM users ORDER BY id ASC');
       return res.status(200).json(rows);
     } catch (error) {
       console.error('[Auth Controller Error] listUsers failed:', error);
-      return res.status(500).json({ error: 'An internal server error occurred' });
+      return res.status(500).json({ success: false, error: 'An internal server error occurred' });
     }
   },
 
+  /**
+   * Approves a pending staff user account.
+   */
   async approveUser(req, res) {
     try {
       const { id } = req.params;
       await db.query('UPDATE users SET is_approved = true WHERE id = $1', [id]);
-      return res.status(200).json({ message: 'User approved successfully' });
+      return res.status(200).json({ success: true, message: 'User approved successfully' });
     } catch (error) {
       console.error('[Auth Controller Error] approveUser failed:', error);
-      return res.status(500).json({ error: 'An internal server error occurred' });
+      return res.status(500).json({ success: false, error: 'An internal server error occurred' });
     }
   }
 };

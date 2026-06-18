@@ -7,30 +7,30 @@ export const authService = {
   /**
    * Register a new user profile.
    *
-   * @param {string} username - Chosen username.
+   * @param {string} fullName - User full name.
    * @param {string} email - Chosen email.
    * @param {string} password - User password.
-   * @param {string} [role='user'] - Access level/role.
+   * @param {string} [role='client'] - Access level/role.
    * @returns {Promise<any>} Response json from backend.
    */
-  async register(username, email, password, role = 'user') {
+  async register(fullName, email, password, role = 'client') {
     return apiCall('/api/auth/register', {
       method: 'POST',
-      body: { username, email, password, role }
+      body: { full_name: fullName, email, password, role }
     });
   },
 
   /**
    * Log in user and persist credentials in localStorage.
    *
-   * @param {string} username - Username or email.
+   * @param {string} email - User email.
    * @param {string} password - Password.
    * @returns {Promise<any>} User details and authentication JWT token.
    */
-  async login(username, password) {
+  async login(email, password) {
     const data = await apiCall('/api/auth/login', {
       method: 'POST',
-      body: { username, password }
+      body: { email, password }
     });
     
     if (data.token) {
