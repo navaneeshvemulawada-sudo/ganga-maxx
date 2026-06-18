@@ -12,7 +12,10 @@ import {
   BarChart3,
   LogOut,
   Sparkles,
-  Settings
+  Settings,
+  Truck,
+  ShoppingCart,
+  Archive
 } from 'lucide-react';
 import authService from '../services/authService';
 
@@ -20,19 +23,51 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const user = authService.getCurrentUser() || { username: 'Demo Admin', role: 'admin' };
 
-  const menuItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'CRM Customers', path: '/customers', icon: Users },
-    { name: 'New Requirement', path: '/requirements/new', icon: FilePlus },
-    { name: 'Quotations', path: '/quotations', icon: FileText },
-    { name: 'AI Bundle', path: '/recommend', icon: Sparkles },
-    { name: 'Warehouse', path: '/inventory', icon: Warehouse },
-    { name: 'Visits', path: '/visits', icon: MapPin },
-    { name: 'Compliance', path: '/compliance', icon: ShieldCheck },
-    { name: 'Messages', path: '/messages', icon: MessageSquare },
-    { name: 'Reports', path: '/reports', icon: BarChart3 },
-    { name: 'Admin', path: '/admin', icon: Settings },
-  ];
+  const getMenuItems = (role) => {
+    const r = role ? role.toLowerCase() : 'client';
+    switch (r) {
+      case 'client':
+        return [
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'New Quotation', path: '/requirements/new', icon: FilePlus },
+          { name: 'My Quotations', path: '/client/quotations', icon: FileText },
+          { name: 'Delivery Tracking', path: '/client/delivery', icon: Truck },
+        ];
+      case 'operations':
+        return [
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'New Requirement', path: '/requirements/new', icon: FilePlus },
+          { name: 'AI Recommendations', path: '/recommend', icon: Sparkles },
+          { name: 'Quotation Approvals', path: '/operations/approvals', icon: ShieldCheck },
+          { name: 'Reports', path: '/reports', icon: BarChart3 },
+        ];
+      case 'supervisor':
+        return [
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Cleaning Supplies', path: '/supervisor/inventory', icon: Warehouse },
+          { name: 'Warehouse Inventory', path: '/inventory', icon: Archive },
+        ];
+      case 'distributor':
+        return [
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Bulk Orders', path: '/distributor/bulk-orders', icon: ShoppingCart },
+          { name: 'Quotations', path: '/quotations', icon: FileText },
+        ];
+      case 'admin':
+      default:
+        return [
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Users List', path: '/admin/users', icon: Users },
+          { name: 'Products Pricing', path: '/admin/products', icon: Settings },
+          { name: 'Warehouse Inventory', path: '/inventory', icon: Warehouse },
+          { name: 'All Quotations', path: '/quotations', icon: FileText },
+          { name: 'System Reports', path: '/admin/reports', icon: BarChart3 },
+          { name: 'AI Config Settings', path: '/admin', icon: Settings },
+        ];
+    }
+  };
+
+  const menuItems = getMenuItems(user.role);
 
   const handleLogout = () => {
     authService.logout();
@@ -166,7 +201,7 @@ export default function Sidebar() {
           </div>
           <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <div style={{ color: 'var(--text-primary)', fontSize: '0.875rem', fontWeight: '700' }}>
-              {user.username === 'admin' ? 'Demo Admin' : user.username}
+               {user.username === 'partner' || user.username === 'admin' ? 'Demo Partner' : user.username}
             </div>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'capitalize', fontWeight: '500' }}>
               {user.role}

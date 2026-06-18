@@ -20,6 +20,7 @@ export default function AIRecommendation() {
   const [quantities, setQuantities] = useState({});
   const [building, setBuilding] = useState(false);
   const [proposalNotes, setProposalNotes] = useState('');
+  const [hasData, setHasData] = useState(true);
 
   useEffect(() => {
     // Read selections from session
@@ -27,10 +28,11 @@ export default function AIRecommendation() {
     const savedRecs = sessionStorage.getItem('ai_recommendation');
 
     if (!savedInputs || !savedRecs) {
-      navigate('/requirements/new');
+      setHasData(false);
       return;
     }
 
+    setHasData(true);
     const parsedInputs = JSON.parse(savedInputs);
     const parsedRecs = JSON.parse(savedRecs);
 
@@ -56,6 +58,35 @@ export default function AIRecommendation() {
     setSelectedItems(itemsSelection);
     setQuantities(itemsQuantities);
   }, [navigate]);
+
+  if (!hasData) {
+    return (
+      <div className="animate-fade" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', textAlign: 'center' }}>
+        <div style={{
+          backgroundColor: 'var(--accent-light)',
+          color: 'var(--accent-primary)',
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '1.5rem'
+        }}>
+          <Sparkles size={32} />
+        </div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
+          No Active Recommendation Session
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', maxWidth: '460px', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+          Please complete the New Requirement Wizard first. The AI bundle recommendation engine requires facility specifications to forecast cleaning supplies correctly.
+        </p>
+        <button className="btn btn-primary" onClick={() => navigate('/requirements/new')}>
+          Start Requirement Wizard
+        </button>
+      </div>
+    );
+  }
 
   if (!inputs || !recs) return null;
 
@@ -134,7 +165,7 @@ export default function AIRecommendation() {
           staff: parseInt(inputs.staff_count) || 0,
           area: parseInt(inputs.area) || 0,
           health_score,
-          compliance: inputs.compliance.join(', '),
+          compliance: (inputs.compliance || []).join(', '),
           cleaning_frequency: inputs.cleaning_frequency,
           num_washrooms: parseInt(inputs.num_washrooms) || 0,
           daily_visitors: parseInt(inputs.daily_visitors) || 0,

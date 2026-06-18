@@ -1,33 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, Search, Sparkles } from 'lucide-react';
+import api from '../services/api';
+import authService from '../services/authService';
 
 export default function Messages() {
-  const [messages, setMessages] = useState([
-    { sender: 'procurement', text: 'Hello, when can we expect delivery of the TR-005 Toilet Cleaner batch? We are running low on stock in Block B.', time: '10:02 AM' },
-    { sender: 'system', text: 'CleanBundle AI system check: Product TR-005 has been marked as low stock in the Warehouse. Order generated.', time: '10:03 AM' },
-    { sender: 'me', text: 'Hello! I have created draft Quotation QT-20260610-0001 for the refills. Once you approve it, we will ship immediately.', time: '11:15 AM' },
-    { sender: 'procurement', text: 'Perfect. Let me review the draft quote and submit it for facilities approval now.', time: '11:17 AM' }
-  ]);
-
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [input, setInput] = useState('');
+  
+  const currentUser = authService.getCurrentUser() || { username: 'me', role: 'admin' };
 
-  const handleSendMessage = (e) => {
+  useEffect(() => {
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchMessages = async () => {
+    try {
+      const data = await api.apiCall('/api/messages');
+      setMessages(data);
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!input.trim()) return;
 
-    setMessages(prev => [
-      ...prev,
-      { sender: 'me', text: input, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-    ]);
+    const textToSend = input.trim();
     setInput('');
 
-    // Trigger dummy AI response
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        { sender: 'procurement', text: 'Got it. Thanks! We will update you shortly.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-      ]);
-    }, 1500);
+    try {
+      const newMsg = await api.apiCall('/api/messages', {
+        method: 'POST',
+        body: { text: textToSend }
+      });
+      setMessages(prev => [...prev, newMsg]);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    }
   };
 
   return (
@@ -139,7 +154,7 @@ export default function Messages() {
           {/* Message view area */}
           <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', backgroundColor: 'var(--bg-primary)' }}>
             {messages.map((m, index) => {
-              const isMe = m.sender === 'me';
+              const isMe = m.sender === 'me' || m.sender === currentUser.username || m.sender === currentUser.role;
               const isSys = m.sender === 'system';
               
               if (isSys) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, RotateCcw, AlertTriangle, ShieldCheck, BadgeDollarSign, Archive } from 'lucide-react';
+import { Search, Plus, RotateCcw, AlertTriangle, BadgeDollarSign, Archive } from 'lucide-react';
 import api from '../services/api';
 
 export default function WarehouseInventory() {
@@ -8,6 +8,18 @@ export default function WarehouseInventory() {
   const [search, setSearch] = useState('');
   const [restockSku, setRestockSku] = useState(null);
   const [restockAmount, setRestockAmount] = useState('50');
+  
+  // Add Product State
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    category: 'Chemicals',
+    stock: '0',
+    min_stock: '0',
+    unit: 'pcs',
+    unit_price: '0.0',
+    location: ''
+  });
 
   useEffect(() => {
     fetchInventory();
@@ -37,6 +49,48 @@ export default function WarehouseInventory() {
       fetchInventory();
     } catch (err) {
       alert('Failed to restock: ' + err.message);
+    }
+  };
+
+  const handleAddInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewProduct(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    if (!newProduct.name.trim()) {
+      alert('Product name is required.');
+      return;
+    }
+
+    try {
+      await api.apiCall('/api/inventory', {
+        method: 'POST',
+        body: {
+          name: newProduct.name.trim(),
+          category: newProduct.category,
+          stock: parseInt(newProduct.stock) || 0,
+          min_stock: parseInt(newProduct.min_stock) || 0,
+          unit: newProduct.unit,
+          unit_price: parseFloat(newProduct.unit_price) || 0.0,
+          location: newProduct.location.trim() || 'N/A'
+        }
+      });
+      alert(`Product "${newProduct.name}" added successfully!`);
+      setShowAddForm(false);
+      setNewProduct({
+        name: '',
+        category: 'Chemicals',
+        stock: '0',
+        min_stock: '0',
+        unit: 'pcs',
+        unit_price: '0.0',
+        location: ''
+      });
+      fetchInventory();
+    } catch (err) {
+      alert(`Failed to add product: ${err.message}`);
     }
   };
 
@@ -78,11 +132,131 @@ export default function WarehouseInventory() {
           </p>
         </div>
         
-        <button className="btn btn-secondary" style={{ height: '40px', gap: '0.25rem' }} onClick={fetchInventory}>
-          <RotateCcw size={16} />
-          <span>Reload Live Stock</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-primary" style={{ height: '40px', gap: '0.25rem' }} onClick={() => setShowAddForm(true)}>
+            <Plus size={16} />
+            <span>Add New Product</span>
+          </button>
+          
+          <button className="btn btn-secondary" style={{ height: '40px', gap: '0.25rem' }} onClick={fetchInventory}>
+            <RotateCcw size={16} />
+            <span>Reload Live Stock</span>
+          </button>
+        </div>
       </div>
+
+      {showAddForm && (
+        <div className="card-glass animate-fade" style={{ padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: '800', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+            Register New Product SKU
+          </h3>
+          <form onSubmit={handleAddProduct}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Product Description Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  className="form-input"
+                  placeholder="e.g. Heavy Duty Toilet Brush"
+                  style={{ height: '36px', borderRadius: '6px' }}
+                  value={newProduct.name}
+                  onChange={handleAddInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Category</label>
+                <select
+                  name="category"
+                  className="form-input"
+                  style={{ height: '36px', borderRadius: '6px' }}
+                  value={newProduct.category}
+                  onChange={handleAddInputChange}
+                >
+                  <option>Chemicals</option>
+                  <option>Accessories</option>
+                  <option>Consumables</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Unit of Measure</label>
+                <input
+                  type="text"
+                  name="unit"
+                  className="form-input"
+                  placeholder="e.g. L, pcs, pack, box"
+                  style={{ height: '36px', borderRadius: '6px' }}
+                  value={newProduct.unit}
+                  onChange={handleAddInputChange}
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Initial Stock Level</label>
+                <input
+                  type="number"
+                  name="stock"
+                  className="form-input"
+                  style={{ height: '36px', borderRadius: '6px' }}
+                  value={newProduct.stock}
+                  onChange={handleAddInputChange}
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Min Stock Threshold</label>
+                <input
+                  type="number"
+                  name="min_stock"
+                  className="form-input"
+                  style={{ height: '36px', borderRadius: '6px' }}
+                  value={newProduct.min_stock}
+                  onChange={handleAddInputChange}
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Unit Price (₹)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="unit_price"
+                  className="form-input"
+                  style={{ height: '36px', borderRadius: '6px' }}
+                  value={newProduct.unit_price}
+                  onChange={handleAddInputChange}
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Warehouse Aisle Location</label>
+                <input
+                  type="text"
+                  name="location"
+                  className="form-input"
+                  placeholder="e.g. Aisle B4"
+                  style={{ height: '36px', borderRadius: '6px' }}
+                  value={newProduct.location}
+                  onChange={handleAddInputChange}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn btn-secondary" style={{ height: '36px' }} onClick={() => setShowAddForm(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" style={{ height: '36px' }}>
+                Save Product
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* KPI Overview Cards */}
       <div className="grid-cols-3" style={{ marginBottom: '2rem' }}>

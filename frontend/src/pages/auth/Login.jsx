@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Mail, Lock, ShieldCheck, Loader2 } from 'lucide-react';
-import authService from '../services/authService';
-import bgImage from '../assets/login_background.png';
+import authService from '../../services/authService';
+import bgImage from '../../assets/login_background.png';
 
 export default function Login() {
   const [username, setUsername] = useState('demo@cleanbundle.ai');
   const [password, setPassword] = useState('Demo@1234');
-  const [activeRole, setActiveRole] = useState('Partner');
+  const [activeRole, setActiveRole] = useState('Admin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -22,20 +22,24 @@ export default function Login() {
   const handleRoleSelect = (role) => {
     setActiveRole(role);
     switch (role) {
-      case 'Partner':
+      case 'Admin':
         setUsername('demo@cleanbundle.ai');
         setPassword('Demo@1234');
         break;
-      case 'Manager':
-        setUsername('manager@cleanbundle.ai');
+      case 'Operations':
+        setUsername('operations@cleanbundle.ai');
         setPassword('Demo@1234');
         break;
       case 'Supervisor':
         setUsername('supervisor@cleanbundle.ai');
         setPassword('Demo@1234');
         break;
-      case 'Customer':
-        setUsername('sales@cleanbundle.ai');
+      case 'Distributor':
+        setUsername('distributor@cleanbundle.ai');
+        setPassword('Demo@1234');
+        break;
+      case 'Client':
+        setUsername('client@cleanbundle.ai');
         setPassword('Demo@1234');
         break;
       default:
@@ -114,7 +118,7 @@ export default function Login() {
           <h1 style={{ fontSize: '2.25rem', fontWeight: '800', color: 'var(--text-primary)', margin: '0.25rem 0 0.75rem 0', letterSpacing: '-1px', lineHeight: '1.1' }}>
             Sign in to CleanBundle
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.4' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: '1.4' }}>
             Generate AI-powered cleaning product quotations, manage CRM, and track warehouse inventory in one place.
           </p>
 
@@ -179,19 +183,22 @@ export default function Login() {
                 backgroundColor: 'var(--bg-primary)',
                 padding: '4px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)'
+                border: '1px solid var(--border-color)',
+                flexWrap: 'wrap',
+                gap: '2px'
               }}>
-                {['Customer', 'Manager', 'Supervisor', 'Partner'].map(role => (
+                {['Client', 'Operations', 'Supervisor', 'Distributor', 'Admin'].map(role => (
                   <button
                     key={role}
                     type="button"
                     onClick={() => handleRoleSelect(role)}
                     style={{
-                      flex: 1,
+                      flex: '1 1 30%',
+                      minWidth: '70px',
                       padding: '6px 0',
                       border: 'none',
                       borderRadius: '6px',
-                      fontSize: '0.75rem',
+                      fontSize: '0.7rem',
                       fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
@@ -233,30 +240,16 @@ export default function Login() {
               )}
             </button>
 
-            {/* Continue with SSO */}
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{
-                width: '100%',
-                height: '46px',
-                marginTop: '0.75rem',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                gap: '0.5rem',
-                borderColor: 'var(--border-color)'
-              }}
-              disabled={loading}
-            >
-              <ShieldCheck size={16} style={{ color: 'var(--success)' }} />
-              <span>Continue with SSO</span>
-            </button>
+            {/* Link to Register */}
+            <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+              Don't have an account? <Link to="/register" style={{ fontWeight: '600', color: 'var(--accent-primary)' }}>Register here</Link>
+            </div>
           </form>
         </div>
 
         {/* Demo info credentials */}
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
-          <span>Demo: </span>
+          <span>Demo Admin: </span>
           <strong style={{ color: 'var(--text-secondary)' }}>demo@cleanbundle.ai</strong>
           <span style={{ margin: '0 0.5rem' }}>·</span>
           <span>Password: </span>

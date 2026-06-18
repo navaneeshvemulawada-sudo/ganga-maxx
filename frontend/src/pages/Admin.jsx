@@ -4,7 +4,7 @@ import api from '../services/api';
 import authService from '../services/authService';
 
 export default function Admin() {
-  const currentUser = authService.getCurrentUser() || { username: 'Admin', role: 'admin' };
+  const currentUser = authService.getCurrentUser() || { username: 'Partner', role: 'partner' };
   
   // Settings state
   const [settings, setSettings] = useState({
@@ -19,7 +19,7 @@ export default function Admin() {
   const [userForm, setUserForm] = useState({
     username: '',
     email: '',
-    role: 'sales',
+    role: 'customer',
     password: ''
   });
 
@@ -29,9 +29,10 @@ export default function Admin() {
 
   // Default seeded users for display
   const [usersList, setUsersList] = useState([
-    { id: 1, username: 'admin', email: 'demo@cleanbundle.ai', role: 'admin' },
-    { id: 2, username: 'sales', email: 'sales@cleanbundle.ai', role: 'sales' },
-    { id: 3, username: 'manager', email: 'manager@cleanbundle.ai', role: 'manager' }
+    { id: 1, username: 'partner', email: 'demo@cleanbundle.ai', role: 'partner' },
+    { id: 2, username: 'customer', email: 'sales@cleanbundle.ai', role: 'customer' },
+    { id: 3, username: 'manager', email: 'manager@cleanbundle.ai', role: 'manager' },
+    { id: 4, username: 'supervisor', email: 'supervisor@cleanbundle.ai', role: 'supervisor' }
   ]);
 
   const handleSettingsChange = (e) => {
@@ -91,7 +92,7 @@ export default function Admin() {
       setUserForm({
         username: '',
         email: '',
-        role: 'sales',
+        role: 'customer',
         password: ''
       });
     } catch (err) {
@@ -221,8 +222,8 @@ export default function Admin() {
                       <td style={{ padding: '0.75rem 1rem', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{u.email}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <span className="badge" style={{
-                          backgroundColor: u.role === 'admin' ? '#fee2e2' : u.role === 'manager' ? '#e0f2fe' : '#f1f5f9',
-                          color: u.role === 'admin' ? '#ef4444' : u.role === 'manager' ? '#0284c7' : 'var(--text-secondary)',
+                          backgroundColor: u.role === 'partner' ? '#fee2e2' : u.role === 'manager' ? '#e0f2fe' : u.role === 'supervisor' ? '#dcfce7' : '#f1f5f9',
+                          color: u.role === 'partner' ? '#ef4444' : u.role === 'manager' ? '#0284c7' : u.role === 'supervisor' ? '#15803d' : 'var(--text-secondary)',
                           fontSize: '0.6875rem',
                           fontWeight: '700'
                         }}>
@@ -295,9 +296,10 @@ export default function Admin() {
                   value={userForm.role}
                   onChange={handleUserInputChange}
                 >
-                  <option value="sales">Sales (Staff)</option>
-                  <option value="manager">Manager (Middle-Tier)</option>
-                  <option value="admin">Administrator (Full Control)</option>
+                  <option value="customer">Customer</option>
+                  <option value="manager">Manager</option>
+                  <option value="supervisor">Supervisor</option>
+                  <option value="partner">Partner (Full Control)</option>
                 </select>
               </div>
 

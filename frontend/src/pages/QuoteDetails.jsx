@@ -26,7 +26,7 @@ export default function QuoteDetails() {
   const [discount, setDiscount] = useState(0.0);
   const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState('');
-  const user = authService.getCurrentUser() || { role: 'sales' };
+  const user = authService.getCurrentUser() || { role: 'customer' };
 
   useEffect(() => {
     fetchQuoteDetails();
@@ -166,7 +166,7 @@ export default function QuoteDetails() {
 
   if (!quote) return <div style={{ padding: '2rem', textAlign: 'center' }}>Quotation not found.</div>;
 
-  const canApprove = user.role === 'admin' || user.role === 'manager';
+  const canApprove = user.role === 'operations' || user.role === 'admin';
   const isDraftOrRejected = quote.status === 'draft' || quote.status === 'rejected';
 
   return (

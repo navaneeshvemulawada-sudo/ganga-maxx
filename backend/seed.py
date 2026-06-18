@@ -14,6 +14,7 @@ from backend.models.user import User
 from backend.models.customer import Customer
 from backend.models.inventory import Product
 from backend.models.quotation import Quotation, QuotationItem
+from backend.models.order import Order, OrderItem
 
 def seed_db():
     app = create_app()
@@ -24,15 +25,20 @@ def seed_db():
         
         print("Seeding users...")
         users_to_seed = [
+            {"username": "client", "email": "client@cleanbundle.ai", "role": "client", "password": "Demo@1234"},
+            {"username": "operations", "email": "operations@cleanbundle.ai", "role": "operations", "password": "Demo@1234"},
+            {"username": "supervisor", "email": "supervisor@cleanbundle.ai", "role": "supervisor", "password": "Demo@1234"},
+            {"username": "distributor", "email": "distributor@cleanbundle.ai", "role": "distributor", "password": "Demo@1234"},
             {"username": "admin", "email": "demo@cleanbundle.ai", "role": "admin", "password": "Demo@1234"},
-            {"username": "sales", "email": "sales@cleanbundle.ai", "role": "sales", "password": "Demo@1234"},
-            {"username": "manager", "email": "manager@cleanbundle.ai", "role": "manager", "password": "Demo@1234"},
         ]
         
+        saved_users = {}
         for u_data in users_to_seed:
-            user = User(username=u_data["username"], email=u_data["email"], role=u_data["role"])
+            user = User(username=u_data["username"], email=u_data["email"], role=u_data["role"], is_approved=True)
             user.set_password(u_data["password"])
             db.session.add(user)
+            db.session.flush()
+            saved_users[user.username] = user.id
             
         print("Seeding inventory products...")
         products_to_seed = [
@@ -211,6 +217,7 @@ def seed_db():
         q1 = Quotation(
             quotation_number="QTN-2026-1002",
             customer_id=saved_customers["Test University"],
+            user_id=saved_users["client"],
             subtotal=85654.37,
             tax_rate=18.0,
             tax_amount=15417.793,
@@ -241,6 +248,7 @@ def seed_db():
         q2 = Quotation(
             quotation_number="QTN-2026-1001",
             customer_id=saved_customers["aurora deemed university"],
+            user_id=saved_users["client"],
             subtotal=2876.125,
             tax_rate=18.0,
             tax_amount=517.703,
@@ -271,6 +279,7 @@ def seed_db():
         q3 = Quotation(
             quotation_number="QTN-2026-1003",
             customer_id=saved_customers["Test UniversityTest University"],
+            user_id=saved_users["client"],
             subtotal=36221.6,
             tax_rate=18.0,
             tax_amount=6519.888,
@@ -295,6 +304,30 @@ def seed_db():
             QuotationItem(quotation_id=q3.id, product_name="Toilet Bowl Cleaner 1L", quantity=10, unit_price=120.0, total_price=1200.0),
         ]
         for item in q3_items:
+            db.session.add(item)
+            
+        # Seed a Distributor Bulk Order
+        print("Seeding Distributor Bulk Order...")
+        dist_order = Order(
+            order_number="ORD-2026-2001",
+            user_id=saved_users["distributor"],
+            subtotal=24000.0,
+            discount_rate=0.15,
+            discount_amount=3600.0,
+            total_amount=20400.0,
+            status="In Transit",
+            carrier="CleanBundle Express Logistics",
+            est_arrival=(datetime.now(timezone.utc) + timedelta(days=2)).strftime("%B %d, %Y"),
+            created_at=datetime.now(timezone.utc) - timedelta(days=1)
+        )
+        db.session.add(dist_order)
+        db.session.flush()
+        
+        dist_order_items = [
+            OrderItem(order_id=dist_order.id, product_name="Floor Cleaner Disinfectant 5L", quantity=40, unit_price=450.0, total_price=18000.0),
+            OrderItem(order_id=dist_order.id, product_name="Nitrile Disposable Gloves (Box of 100)", quantity=10, unit_price=600.0, total_price=6000.0)
+        ]
+        for item in dist_order_items:
             db.session.add(item)
             
         db.session.commit()

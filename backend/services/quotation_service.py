@@ -39,9 +39,22 @@ class QuotationService:
         return subtotal, tax_amount, total_amount, parsed_items
 
     @staticmethod
-    def get_all():
-        """Retrieve all quotations."""
-        quotations = Quotation.query.all()
+    def get_all(user_id=None, role=None):
+        """Retrieve all quotations, optionally filtered by user_id and role."""
+        if role == "admin":
+            quotations = Quotation.query.all()
+        elif role == "operations":
+            from sqlalchemy import or_
+            quotations = Quotation.query.filter(
+                or_(
+                    Quotation.user_id == user_id,
+                    Quotation.status.in_(["pending approval", "approved"])
+                )
+            ).all()
+        elif user_id:
+            quotations = Quotation.query.filter_by(user_id=user_id).all()
+        else:
+            quotations = Quotation.query.all()
         return [q.to_dict() for q in quotations], 200
 
     @staticmethod
@@ -80,6 +93,7 @@ class QuotationService:
         quote = Quotation(
             quotation_number=QuotationService._generate_quotation_number(),
             customer_id=customer_id,
+            user_id=data.get("user_id"),
             subtotal=subtotal,
             tax_rate=tax_rate,
             tax_amount=tax_amount,

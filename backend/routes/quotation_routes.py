@@ -7,22 +7,32 @@ quotation_bp = Blueprint("quotations", __name__, url_prefix="/api/quotations")
 @quotation_bp.route("", methods=["GET"])
 @token_required
 def get_all_quotations():
-    """Retrieve all quotations."""
-    response, status_code = QuotationService.get_all()
+    """Retrieve all quotations, filtered by user if not admin."""
+    from flask import g
+    response, status_code = QuotationService.get_all(user_id=g.current_user.id, role=g.current_user.role)
     return jsonify(response), status_code
 
 @quotation_bp.route("/<int:quote_id>", methods=["GET"])
 @token_required
 def get_quotation(quote_id):
     """Retrieve a single quotation by ID."""
+    from flask import g
     response, status_code = QuotationService.get_by_id(quote_id)
+    if status_code == 200 and g.current_user.role != "admin":
+        if response.get("user_id") == g.current_user.id:
+            return jsonify(response), status_code
+        if g.current_user.role == "operations" and response.get("status") in ["pending approval", "approved"]:
+            return jsonify(response), status_code
+        return jsonify({"error": "Unauthorized access to this quotation"}), 403
     return jsonify(response), status_code
 
 @quotation_bp.route("", methods=["POST"])
 @token_required
 def create_quotation():
     """Create a new quotation."""
+    from flask import g
     data = request.get_json() or {}
+    data["user_id"] = g.current_user.id
     response, status_code = QuotationService.create(data)
     return jsonify(response), status_code
 

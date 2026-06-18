@@ -21,6 +21,8 @@ class Quotation(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    
     # Establish relationship to items (one-to-many)
     items = db.relationship("QuotationItem", backref="quotation", cascade="all, delete-orphan", lazy=True)
 
@@ -28,6 +30,7 @@ class Quotation(db.Model):
         return {
             "id": self.id,
             "quotation_number": self.quotation_number,
+            "user_id": self.user_id,
             "customer_id": self.customer_id,
             "customer_name": self.customer.name if self.customer else None,
             "customer_facility_type": self.customer.facility_type if self.customer else None,

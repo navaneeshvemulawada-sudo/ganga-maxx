@@ -68,7 +68,12 @@ class AuthService:
         if User.query.filter_by(email=email).first():
             return {"error": "Email already exists"}, 400
             
-        user = User(username=username, email=email, role=role)
+        # Client role is auto-approved, other staff roles require admin approval
+        is_approved = True
+        if role in ["operations", "supervisor", "distributor"]:
+            is_approved = False
+            
+        user = User(username=username, email=email, role=role, is_approved=is_approved)
         user.set_password(password)
         
         try:
@@ -90,6 +95,10 @@ class AuthService:
         
         if not user or not user.check_password(password):
             return {"error": "Invalid username/email or password"}, 401
+            
+        # Enforce approval gate
+        if not user.is_approved:
+            return {"error": "Your account is pending administrator approval."}, 403
             
         # Generate token payload
         secret = current_app.config.get("JWT_SECRET_KEY")

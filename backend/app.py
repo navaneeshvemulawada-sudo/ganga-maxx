@@ -11,7 +11,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from backend.config import config_by_name
 from backend.models import db
-from backend.routes import auth_bp, customer_bp, quotation_bp, recommend_bp, inventory_bp
+from backend.routes import auth_bp, customer_bp, quotation_bp, recommend_bp, inventory_bp, order_bp, message_bp, requisition_bp
 
 def create_app(config_name=None):
     if not config_name:
@@ -32,6 +32,9 @@ def create_app(config_name=None):
     app.register_blueprint(quotation_bp)
     app.register_blueprint(recommend_bp)
     app.register_blueprint(inventory_bp)
+    app.register_blueprint(order_bp)
+    app.register_blueprint(message_bp)
+    app.register_blueprint(requisition_bp)
 
     
     # Root Health Check Route

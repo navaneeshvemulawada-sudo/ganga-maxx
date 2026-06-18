@@ -11,6 +11,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="user", nullable=False)
+    is_approved = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     
     def set_password(self, password):
@@ -25,5 +26,6 @@ class User(db.Model):
             "username": self.username,
             "email": self.email,
             "role": self.role,
+            "is_approved": self.is_approved,
             "created_at": self.created_at.isoformat()
         }
