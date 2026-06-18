@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Mail, Lock, ShieldCheck, Loader2 } from 'lucide-react';
 import authService from '../../services/authService';
 import bgImage from '../../assets/login_background.png';
+import { supabase } from '../../supabaseClient';
 
 export default function Login() {
   const [username, setUsername] = useState('demo@cleanbundle.ai');
@@ -29,7 +30,24 @@ export default function Login() {
     setError('');
 
     try {
-      await authService.login(username, password);
+      const { data, error: sbError } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password
+      });
+
+      if (sbError) throw sbError;
+
+      if (data.session) {
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user.id,
+          username: data.user.email.split('@')[0],
+          email: data.user.email,
+          role: data.user.user_metadata?.role || 'admin',
+          is_approved: true
+        }));
+      }
+
       navigate('/');
     } catch (err) {
       setError(err.message || 'Authentication failed. Please check credentials.');

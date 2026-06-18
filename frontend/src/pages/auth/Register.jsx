@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, Mail, Lock, User, ShieldAlert, Loader2 } from 'lucide-react';
 import authService from '../../services/authService';
 import bgImage from '../../assets/login_background.png';
+import { supabase } from '../../supabaseClient';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -26,15 +27,43 @@ export default function Register() {
     setSuccess('');
 
     try {
-      await authService.register(username, email, password, role);
-      if (['operations', 'supervisor', 'admin'].includes(role)) {
-        setSuccess('Application submitted! Once approved by the company, you can access your account.');
-      } else {
-        setSuccess('Account registered successfully! Redirecting to login...');
+      const { data, error: sbError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            role: role,
+            username: username
+          }
+        }
+      });
+
+      if (sbError) throw sbError;
+
+      if (data.session) {
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user.id,
+          username: username,
+          email: email,
+          role: role,
+          is_approved: true
+        }));
+      } else if (data.user) {
+        localStorage.setItem('token', 'supabase-pending-confirm');
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user.id,
+          username: username,
+          email: email,
+          role: role,
+          is_approved: true
+        }));
       }
+
+      setSuccess('Account registered successfully! Redirecting...');
       setTimeout(() => {
-        navigate('/login');
-      }, ['operations', 'supervisor', 'admin'].includes(role) ? 3500 : 1500);
+        navigate('/');
+      }, 1500);
     } catch (err) {
       setError(err.message || 'Registration failed. Try a different username/email.');
     } finally {
