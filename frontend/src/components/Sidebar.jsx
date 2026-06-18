@@ -28,14 +28,14 @@ export default function Sidebar() {
     switch (r) {
       case 'client':
         return [
-          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard, end: true },
           { name: 'New Quotation', path: '/requirements/new', icon: FilePlus },
           { name: 'My Quotations', path: '/client/quotations', icon: FileText },
           { name: 'Delivery Tracking', path: '/client/delivery', icon: Truck },
         ];
       case 'operations':
         return [
-          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard, end: true },
           { name: 'New Requirement', path: '/requirements/new', icon: FilePlus },
           { name: 'AI Recommendations', path: '/recommend', icon: Sparkles },
           { name: 'Quotation Approvals', path: '/operations/approvals', icon: ShieldCheck },
@@ -43,26 +43,26 @@ export default function Sidebar() {
         ];
       case 'supervisor':
         return [
-          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard, end: true },
           { name: 'Cleaning Supplies', path: '/supervisor/inventory', icon: Warehouse },
           { name: 'Warehouse Inventory', path: '/inventory', icon: Archive },
         ];
       case 'distributor':
         return [
-          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard, end: true },
           { name: 'Bulk Orders', path: '/distributor/bulk-orders', icon: ShoppingCart },
           { name: 'Quotations', path: '/quotations', icon: FileText },
         ];
       case 'admin':
       default:
         return [
-          { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+          { name: 'Dashboard', path: '/', icon: LayoutDashboard, end: true },
           { name: 'Users List', path: '/admin/users', icon: Users },
           { name: 'Products Pricing', path: '/admin/products', icon: Settings },
           { name: 'Warehouse Inventory', path: '/inventory', icon: Warehouse },
           { name: 'All Quotations', path: '/quotations', icon: FileText },
           { name: 'System Reports', path: '/admin/reports', icon: BarChart3 },
-          { name: 'AI Config Settings', path: '/admin', icon: Settings },
+          { name: 'AI Config Settings', path: '/admin', icon: Settings, end: true },
         ];
     }
   };
@@ -138,7 +138,7 @@ export default function Sidebar() {
             <NavLink
               key={item.name}
               to={item.path}
-              end={item.path === '/'}
+              end={item.end}
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',

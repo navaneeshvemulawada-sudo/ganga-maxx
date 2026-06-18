@@ -5,6 +5,7 @@ from backend.services.auth_service import token_required
 quotation_bp = Blueprint("quotations", __name__, url_prefix="/api/quotations")
 
 @quotation_bp.route("", methods=["GET"])
+@quotation_bp.route("/list", methods=["GET"])
 @token_required
 def get_all_quotations():
     """Retrieve all quotations, filtered by user if not admin."""
@@ -27,6 +28,7 @@ def get_quotation(quote_id):
     return jsonify(response), status_code
 
 @quotation_bp.route("", methods=["POST"])
+@quotation_bp.route("/create", methods=["POST"])
 @token_required
 def create_quotation():
     """Create a new quotation."""
@@ -49,4 +51,18 @@ def update_quotation(quote_id):
 def delete_quotation(quote_id):
     """Delete a quotation."""
     response, status_code = QuotationService.delete(quote_id)
+    return jsonify(response), status_code
+
+@quotation_bp.route("/process", methods=["POST"])
+@token_required
+def process_quotation():
+    """Process a quotation (update its status)."""
+    data = request.get_json() or {}
+    quote_id = data.get("id") or data.get("quote_id")
+    status = data.get("status")
+    
+    if not quote_id or not status:
+        return jsonify({"error": "Both id/quote_id and status are required"}), 400
+        
+    response, status_code = QuotationService.update(quote_id, {"status": status})
     return jsonify(response), status_code

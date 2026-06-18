@@ -148,6 +148,124 @@ const quotationController = {
         error: error.message
       });
     }
+  },
+
+  /**
+   * Retrieves all quotations
+   */
+  async listQuotations(req, res) {
+    try {
+      const db = require('../config/db');
+      const [rows] = await db.query('SELECT * FROM quotations ORDER BY id DESC');
+      // Map and format response to align with model schemas if needed
+      return res.status(200).json(rows);
+    } catch (error) {
+      console.error('[Controller Error] Error in listQuotations:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'An internal server error occurred',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Retrieves a single quotation by ID or quote_id
+   */
+  async getQuotationById(req, res) {
+    try {
+      const db = require('../config/db');
+      const { id } = req.params;
+      
+      let query = 'SELECT * FROM quotations WHERE quote_id = ? LIMIT 1';
+      let params = [id];
+
+      if (/^\d+$/.test(String(id))) {
+        query = 'SELECT * FROM quotations WHERE id = ? LIMIT 1';
+        params = [parseInt(id, 10)];
+      }
+
+      const [rows] = await db.query(query, params);
+
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Quotation not found'
+        });
+      }
+
+      return res.status(200).json(rows[0]);
+    } catch (error) {
+      console.error('[Controller Error] Error in getQuotationById:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'An internal server error occurred',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Processes a quotation status (updates status)
+   */
+  async processQuotation(req, res) {
+    try {
+      const db = require('../config/db');
+      const { id, quote_id, status } = req.body;
+      
+      const targetId = id || quote_id;
+      const targetStatus = status;
+
+      if (!targetId || !targetStatus) {
+        return res.status(400).json({
+          success: false,
+          error: 'Both id/quote_id and status are required'
+        });
+      }
+
+      // Check if quotation exists safely without type coercion errors
+      let checkQuery = 'SELECT * FROM quotations WHERE quote_id = ? LIMIT 1';
+      let checkParams = [targetId];
+
+      if (/^\d+$/.test(String(targetId))) {
+        checkQuery = 'SELECT * FROM quotations WHERE id = ? LIMIT 1';
+        checkParams = [parseInt(targetId, 10)];
+      }
+
+      const [checkRows] = await db.query(checkQuery, checkParams);
+
+      if (checkRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Quotation not found'
+        });
+      }
+
+      // Update quotation status in database safely
+      let updateQuery = 'UPDATE quotations SET status = ? WHERE quote_id = ?';
+      let updateParams = [targetStatus, targetId];
+
+      if (/^\d+$/.test(String(targetId))) {
+        updateQuery = 'UPDATE quotations SET status = ? WHERE id = ?';
+        updateParams = [targetStatus, parseInt(targetId, 10)];
+      }
+
+      await db.query(updateQuery, updateParams);
+
+      return res.status(200).json({
+        success: true,
+        message: `Quotation status updated successfully to ${targetStatus}`,
+        quote_id: checkRows[0].quote_id,
+        status: targetStatus
+      });
+    } catch (error) {
+      console.error('[Controller Error] Error in processQuotation:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'An internal server error occurred',
+        error: error.message
+      });
+    }
   }
 };
 

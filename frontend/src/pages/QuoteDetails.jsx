@@ -37,9 +37,9 @@ export default function QuoteDetails() {
       setLoading(true);
       const data = await quotationService.getById(id);
       setQuote(data);
-      setEditingItems(data.items.map(item => ({ ...item })));
-      setTaxRate(data.tax_rate);
-      setDiscount(data.discount);
+      setEditingItems((data.items || []).map(item => ({ ...item })));
+      setTaxRate(data.tax_rate !== undefined ? data.tax_rate : 18.0);
+      setDiscount(data.discount !== undefined ? data.discount : 0.0);
       setNotes(data.notes || '');
     } catch (err) {
       console.error('Failed to fetch quotation details:', err);
@@ -124,7 +124,7 @@ export default function QuoteDetails() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Quotation_${quote.quotation_number}.csv`);
+    link.setAttribute("download", `Quotation_${quote.quotation_number || quote.quote_id}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -179,7 +179,7 @@ export default function QuoteDetails() {
             <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>AI Supply Chain Quotation Statement</span>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: '#0f172a', fontFamily: 'var(--font-heading)' }}>{quote.quotation_number}</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: '#0f172a', fontFamily: 'var(--font-heading)' }}>{quote.quotation_number || quote.quote_id}</h2>
             <p style={{ fontSize: '0.875rem', color: '#475569', margin: '0.25rem 0 0 0' }}>Date: {new Date(quote.created_at).toLocaleDateString('en-IN')}</p>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function QuoteDetails() {
           <div>
             <h4 style={{ fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: '#64748b', marginBottom: '0.5rem' }}>Customer Details</h4>
             <strong style={{ fontSize: '0.9375rem', color: '#0f172a' }}>{quote.customer_name}</strong>
-            <p style={{ fontSize: '0.8125rem', color: '#475569', marginTop: '0.25rem' }}>Facility Type: {quote.customer_facility_type || 'N/A'}<br/>Valid Until: {quote.valid_until ? new Date(quote.valid_until).toLocaleDateString('en-IN') : 'N/A'}</p>
+            <p style={{ fontSize: '0.8125rem', color: '#475569', marginTop: '0.25rem' }}>Facility Type: {quote.customer_facility_type || quote.institution_type || 'N/A'}<br/>Valid Until: {quote.valid_until ? new Date(quote.valid_until).toLocaleDateString('en-IN') : 'N/A'}</p>
           </div>
         </div>
       </div>
@@ -386,7 +386,7 @@ export default function QuoteDetails() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.8125rem' }}>
               <div>
                 <span style={{ color: 'var(--text-muted)' }}>Quotation Code:</span>
-                <strong style={{ float: 'right', color: 'var(--text-primary)' }}>{quote.quotation_number}</strong>
+                <strong style={{ float: 'right', color: 'var(--text-primary)' }}>{quote.quotation_number || quote.quote_id}</strong>
               </div>
               <div>
                 <span style={{ color: 'var(--text-muted)' }}>Current Status:</span>

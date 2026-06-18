@@ -7,7 +7,6 @@ import bgImage from '../../assets/login_background.png';
 export default function Login() {
   const [username, setUsername] = useState('demo@cleanbundle.ai');
   const [password, setPassword] = useState('Demo@1234');
-  const [activeRole, setActiveRole] = useState('Admin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -18,34 +17,6 @@ export default function Login() {
       navigate('/');
     }
   }, [navigate]);
-
-  const handleRoleSelect = (role) => {
-    setActiveRole(role);
-    switch (role) {
-      case 'Admin':
-        setUsername('demo@cleanbundle.ai');
-        setPassword('Demo@1234');
-        break;
-      case 'Operations':
-        setUsername('operations@cleanbundle.ai');
-        setPassword('Demo@1234');
-        break;
-      case 'Supervisor':
-        setUsername('supervisor@cleanbundle.ai');
-        setPassword('Demo@1234');
-        break;
-      case 'Distributor':
-        setUsername('distributor@cleanbundle.ai');
-        setPassword('Demo@1234');
-        break;
-      case 'Client':
-        setUsername('client@cleanbundle.ai');
-        setPassword('Demo@1234');
-        break;
-      default:
-        break;
-    }
-  };
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
@@ -175,45 +146,6 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Role Tab Selector */}
-            <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-              <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: '600', marginBottom: '0.5rem' }}>Role</label>
-              <div style={{
-                display: 'flex',
-                backgroundColor: 'var(--bg-primary)',
-                padding: '4px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                flexWrap: 'wrap',
-                gap: '2px'
-              }}>
-                {['Client', 'Operations', 'Supervisor', 'Distributor', 'Admin'].map(role => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => handleRoleSelect(role)}
-                    style={{
-                      flex: '1 1 30%',
-                      minWidth: '70px',
-                      padding: '6px 0',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.7rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      backgroundColor: activeRole === role ? 'var(--bg-secondary)' : 'transparent',
-                      color: activeRole === role ? 'var(--text-primary)' : 'var(--text-muted)',
-                      boxShadow: activeRole === role ? 'var(--shadow-sm)' : 'none',
-                      border: activeRole === role ? '1px solid var(--border-color)' : '1px solid transparent'
-                    }}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Sign in action */}
             <button
               type="submit"
@@ -248,12 +180,15 @@ export default function Login() {
         </div>
 
         {/* Demo info credentials */}
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
-          <span>Demo Admin: </span>
-          <strong style={{ color: 'var(--text-secondary)' }}>demo@cleanbundle.ai</strong>
-          <span style={{ margin: '0 0.5rem' }}>·</span>
-          <span>Password: </span>
-          <strong style={{ color: 'var(--text-secondary)' }}>Demo@1234</strong>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem', lineHeights: '1.4' }}>
+          <div style={{ fontWeight: '700', marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>Demo Accounts (Password: Demo@1234):</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 1rem' }}>
+            <span>Admin: <strong style={{ color: 'var(--text-secondary)' }}>demo@cleanbundle.ai</strong></span>
+            <span>Client: <strong style={{ color: 'var(--text-secondary)' }}>client@cleanbundle.ai</strong></span>
+            <span>Operations: <strong style={{ color: 'var(--text-secondary)' }}>operations@cleanbundle.ai</strong></span>
+            <span>Supervisor: <strong style={{ color: 'var(--text-secondary)' }}>supervisor@cleanbundle.ai</strong></span>
+            <span>Distributor: <strong style={{ color: 'var(--text-secondary)' }}>distributor@cleanbundle.ai</strong></span>
+          </div>
         </div>
 
       </div>

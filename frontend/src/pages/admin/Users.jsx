@@ -10,7 +10,7 @@ export default function AdminUsers() {
   const [userForm, setUserForm] = useState({
     username: '',
     email: '',
-    role: 'client',
+    role: 'operations',
     password: ''
   });
 
@@ -67,7 +67,7 @@ export default function AdminUsers() {
         setRegisterSuccess(`Account for ${userForm.username} created and auto-approved successfully!`);
       }
       
-      setUserForm({ username: '', email: '', role: 'client', password: '' });
+      setUserForm({ username: '', email: '', role: 'operations', password: '' });
       fetchUsers();
     } catch (err) {
       setRegisterError(err.message || 'Registration failed.');
@@ -88,7 +88,7 @@ export default function AdminUsers() {
   };
 
   const getRoleBadgeStyle = (role) => {
-    switch(role.toLowerCase()) {
+    switch((role || '').toLowerCase()) {
       case 'admin': return { bg: '#fee2e2', text: '#ef4444' };
       case 'operations': return { bg: '#e0f2fe', text: '#0284c7' };
       case 'supervisor': return { bg: '#dcfce7', text: '#15803d' };
@@ -114,7 +114,7 @@ export default function AdminUsers() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left: Users List Table */}
-        <div className="card-glass" style={{ padding: '1.5rem 2rem', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+        <div className="card-glass" style={{ padding: '1.5rem 2rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
             <Users size={20} style={{ color: 'var(--accent-primary)' }} />
             <span>Registered Accounts</span>
@@ -193,7 +193,7 @@ export default function AdminUsers() {
         </div>
 
         {/* Right: Register form */}
-        <div className="card-glass" style={{ padding: '1.5rem', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+        <div className="card-glass" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: '800', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)' }}>
             <UserPlus size={18} style={{ color: 'var(--accent-primary)' }} />
             <span>Create Staff Account</span>
@@ -249,10 +249,8 @@ export default function AdminUsers() {
                 onChange={handleUserInputChange}
                 disabled={registering}
               >
-                <option value="client">Client</option>
                 <option value="operations">Operations</option>
                 <option value="supervisor">Supervisor</option>
-                <option value="distributor">Distributor</option>
                 <option value="admin">Admin</option>
               </select>
             </div>

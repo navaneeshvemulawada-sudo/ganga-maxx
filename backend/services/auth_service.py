@@ -68,9 +68,9 @@ class AuthService:
         if User.query.filter_by(email=email).first():
             return {"error": "Email already exists"}, 400
             
-        # Client role is auto-approved, other staff roles require admin approval
+        # Clients and distributors are auto-approved, staff roles require admin approval
         is_approved = True
-        if role in ["operations", "supervisor", "distributor"]:
+        if role in ["operations", "supervisor", "admin"]:
             is_approved = False
             
         user = User(username=username, email=email, role=role, is_approved=is_approved)

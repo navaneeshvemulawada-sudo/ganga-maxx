@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const quotationRoutes = require('./routes/quotationRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -12,7 +13,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Register routes
+app.use('/api/auth', authRoutes);
 app.use('/api/quotations', quotationRoutes);
+app.use('/api/quotation', quotationRoutes);
 
 // Base Health Check
 app.get('/', (req, res) => {

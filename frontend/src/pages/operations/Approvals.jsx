@@ -29,7 +29,7 @@ export default function OperationsApprovals() {
     try {
       if (setLoadState) setLoading(true);
       const data = await quotationService.getAll();
-      const pending = data.filter(q => q.status.toLowerCase() === 'pending approval');
+      const pending = data.filter(q => (q.status || 'draft').toLowerCase() === 'pending approval');
       setQuotes(pending);
     } catch (err) {
       console.error('Failed to load pending quotations:', err);
@@ -42,7 +42,7 @@ export default function OperationsApprovals() {
     try {
       if (setLoadState) setLoading(true);
       const data = await api.apiCall('/api/requisitions');
-      const pending = data.filter(r => r.status.toLowerCase() === 'pending');
+      const pending = data.filter(r => (r.status || '').toLowerCase() === 'pending');
       setRequisitions(pending);
     } catch (err) {
       console.error('Failed to load pending requisitions:', err);
@@ -158,9 +158,9 @@ export default function OperationsApprovals() {
                 <tbody>
                   {quotes.map((q) => (
                     <tr key={q.id}>
-                      <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{q.quotation_number}</td>
+                      <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{q.quotation_number || q.quote_id}</td>
                       <td style={{ fontWeight: '600' }}>{q.customer_name}</td>
-                      <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{formatCurrency(q.total_amount)}</td>
+                      <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{formatCurrency(q.total_amount !== undefined ? q.total_amount : (q.monthly_cost || 0))}</td>
                       <td>{new Date(q.created_at).toLocaleDateString('en-IN')}</td>
                       <td style={{ textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'center' }}>

@@ -33,7 +33,7 @@ export default function DistributorDashboard() {
   };
 
   // Live metrics calculations
-  const activeOrders = orders.filter(o => o.status.toLowerCase() !== 'delivered');
+  const activeOrders = orders.filter(o => (o.status || '').toLowerCase() !== 'delivered');
   const totalSpend = orders.reduce((sum, o) => sum + o.total_amount, 0);
   
   // Calculate total items ordered to compute discount tier
@@ -58,14 +58,14 @@ export default function DistributorDashboard() {
   ];
 
   const getStatusBadgeStyles = (status) => {
-    switch (status.toLowerCase()) {
+    switch ((status || '').toLowerCase()) {
       case 'delivered':
-        return { backgroundColor: '#e6fbf4', color: '#10b981' };
+        return { backgroundColor: 'var(--success-light)', color: 'var(--success)' };
       case 'in transit':
-        return { backgroundColor: '#e0f2fe', color: '#0284c7' };
+        return { backgroundColor: 'var(--info-light)', color: 'var(--info)' };
       case 'processing':
       default:
-        return { backgroundColor: '#fff7ed', color: '#f97316' };
+        return { backgroundColor: 'var(--warning-light)', color: 'var(--warning)' };
     }
   };
 
@@ -89,7 +89,7 @@ export default function DistributorDashboard() {
         {metrics.map((m) => {
           const Icon = m.icon;
           return (
-            <div key={m.label} className="card-glass" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.5rem', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+            <div key={m.label} className="card-glass" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
               <div style={{
                 backgroundColor: 'var(--bg-hover)',
                 color: m.color,
@@ -116,7 +116,7 @@ export default function DistributorDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
         
         {/* Left Card: Active Shipments and tracking status */}
-        <div className="card-glass" style={{ padding: '1.5rem', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+        <div className="card-glass" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: '800', marginBottom: '1.25rem' }}>
             Active Shipments & Logistics Tracking
           </h3>
@@ -182,7 +182,7 @@ export default function DistributorDashboard() {
                   {/* Progress Line */}
                   <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '4px', marginTop: '0.25rem' }}>
                     <div style={{ flex: 1, height: '4px', borderRadius: '2px', backgroundColor: 'var(--info)' }} />
-                    <div style={{ flex: 1, height: '4px', borderRadius: '2px', backgroundColor: order.status.toLowerCase() !== 'processing' ? 'var(--info)' : 'var(--border-color)' }} />
+                    <div style={{ flex: 1, height: '4px', borderRadius: '2px', backgroundColor: (order.status || '').toLowerCase() !== 'processing' ? 'var(--info)' : 'var(--border-color)' }} />
                     <div style={{ flex: 1, height: '4px', borderRadius: '2px', backgroundColor: 'var(--border-color)' }} />
                   </div>
                 </div>
@@ -201,7 +201,7 @@ export default function DistributorDashboard() {
         {/* Right Card: Dealer discounts and Quick Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          <div className="card-glass" style={{ padding: '1.5rem', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div className="card-glass" style={{ padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: '800', marginBottom: '1rem' }}>Dealer Pricing & Volume Discounts</h3>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
               Your current volume total is <strong>{totalItemsOrdered} units</strong>. Keep ordering to unlock higher discount tiers!
@@ -238,7 +238,7 @@ export default function DistributorDashboard() {
           </div>
 
           {/* Quick links card */}
-          <div className="card-glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div className="card-glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: '800', marginBottom: '0.25rem' }}>Quick Actions</h3>
             
             <button onClick={() => navigate('/distributor/bulk-orders')} className="btn btn-secondary" style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.75rem 1rem', width: '100%' }}>

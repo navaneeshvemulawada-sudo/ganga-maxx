@@ -201,7 +201,7 @@ export default function RequirementWizard() {
         padding: '0.875rem 1.5rem',
         marginBottom: '2rem',
         borderRadius: '12px',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--bg-secondary)',
         border: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
@@ -228,8 +228,8 @@ export default function RequirementWizard() {
                   width: '28px',
                   height: '28px',
                   borderRadius: '50%',
-                  backgroundColor: isActive ? '#0f172a' : '#f1f5f9',
-                  color: isActive ? '#fff' : '#0369a1',
+                  backgroundColor: isActive ? 'var(--accent-primary)' : 'var(--bg-hover)',
+                  color: isActive ? '#fff' : 'var(--text-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -263,7 +263,7 @@ export default function RequirementWizard() {
       }}>
         
         {/* Left Column: Form parameters card */}
-        <div className="card-glass" style={{ padding: '2rem', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+        <div className="card-glass" style={{ padding: '2rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
           
           {/* STEP 1: Institution Details */}
           {step === 1 && (
@@ -473,9 +473,9 @@ export default function RequirementWizard() {
                           height: '34px',
                           borderRadius: '6px',
                           border: '1px solid',
-                          backgroundColor: formData.cleaning_frequency === freq ? '#0f172a' : '#f1f5f9',
+                          backgroundColor: formData.cleaning_frequency === freq ? 'var(--accent-primary)' : 'var(--bg-hover)',
                           color: formData.cleaning_frequency === freq ? '#fff' : 'var(--text-secondary)',
-                          borderColor: formData.cleaning_frequency === freq ? '#0f172a' : '#e2e8f0',
+                          borderColor: formData.cleaning_frequency === freq ? 'var(--accent-primary)' : 'var(--border-color)',
                           fontWeight: '600',
                           fontSize: '0.75rem',
                           flex: 1,
@@ -562,10 +562,10 @@ export default function RequirementWizard() {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            backgroundColor: isChecked ? '#e0f2fe' : '#fff',
+                            backgroundColor: isChecked ? 'var(--accent-light)' : 'var(--bg-secondary)',
                             color: 'var(--text-primary)',
                             border: '1px solid',
-                            borderColor: isChecked ? '#0ea5e9' : 'var(--border-color)',
+                            borderColor: isChecked ? 'var(--accent-primary)' : 'var(--border-color)',
                             borderRadius: '6px',
                             cursor: 'pointer',
                             fontSize: '0.75rem'
@@ -662,7 +662,7 @@ export default function RequirementWizard() {
                   <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                     {formData.compliance.length > 0 ? (
                       formData.compliance.map(c => (
-                        <span key={c} style={{ fontSize: '0.7rem', backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>
+                        <span key={c} style={{ fontSize: '0.7rem', backgroundColor: 'var(--accent-light)', color: 'var(--accent-primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>
                           {c}
                         </span>
                       ))
@@ -709,7 +709,7 @@ export default function RequirementWizard() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.25rem',
-                  backgroundColor: '#64748b',
+                  backgroundColor: 'var(--text-secondary)',
                   color: '#fff',
                   border: 'none',
                   cursor: 'pointer'
@@ -731,7 +731,7 @@ export default function RequirementWizard() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  backgroundColor: '#10b981',
+                  backgroundColor: 'var(--success)',
                   color: '#fff',
                   border: 'none',
                   cursor: 'pointer',
@@ -749,8 +749,8 @@ export default function RequirementWizard() {
 
         {/* Right Column: AI Sidebar tips box */}
         <div style={{
-          backgroundColor: '#e6fbf4',
-          border: '1px solid #10b981',
+          backgroundColor: 'var(--success-light)',
+          border: '1px solid var(--success)',
           borderRadius: '12px',
           padding: '1.5rem',
           display: 'flex',
@@ -804,8 +804,8 @@ export default function RequirementWizard() {
 
           {/* Draft persistent tag at card bottom */}
           <div style={{
-            backgroundColor: '#fff',
-            border: '1px solid #cbf3e4',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
             borderRadius: '6px',
             padding: '0.625rem 0.875rem',
             fontSize: '0.75rem',

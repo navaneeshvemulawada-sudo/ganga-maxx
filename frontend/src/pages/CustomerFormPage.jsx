@@ -163,7 +163,7 @@ export default function CustomerFormPage() {
           className="btn btn-primary"
           style={{
             height: '42px',
-            backgroundColor: '#0f172a',
+            backgroundColor: 'var(--accent-primary)',
             color: '#fff',
             borderRadius: '8px',
             padding: '0 1.25rem',
@@ -208,7 +208,7 @@ export default function CustomerFormPage() {
               fontSize: '0.8125rem',
               borderRadius: '8px',
               border: '1px solid var(--border-color)',
-              backgroundColor: '#fff'
+              backgroundColor: 'var(--bg-secondary)'
             }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -228,9 +228,9 @@ export default function CustomerFormPage() {
                 height: '36px',
                 borderRadius: '8px',
                 border: '1px solid',
-                backgroundColor: selectedCategory === cat ? '#0f172a' : '#f1f5f9',
+                backgroundColor: selectedCategory === cat ? 'var(--accent-primary)' : 'var(--bg-hover)',
                 color: selectedCategory === cat ? '#fff' : 'var(--text-secondary)',
-                borderColor: selectedCategory === cat ? '#0f172a' : '#e2e8f0',
+                borderColor: selectedCategory === cat ? 'var(--accent-primary)' : 'var(--border-color)',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.15s'
@@ -258,7 +258,7 @@ export default function CustomerFormPage() {
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 padding: '1.5rem',
-                backgroundColor: '#fff',
+                backgroundColor: 'var(--bg-secondary)',
                 borderRadius: '12px',
                 border: '1px solid var(--border-color)'
               }}
@@ -593,9 +593,9 @@ export default function CustomerFormPage() {
                 <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" style={{ backgroundColor: '#0f172a', borderColor: '#0f172a' }}>
-                  Create Customer
-                </button>
+                  <button type="submit" className="btn btn-primary" style={{ backgroundColor: 'var(--accent-primary)', borderColor: 'var(--accent-primary)' }}>
+                    Create Customer
+                  </button>
               </div>
             </form>
           </div>

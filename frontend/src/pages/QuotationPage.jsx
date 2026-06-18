@@ -31,16 +31,18 @@ export default function QuotationPage() {
   };
 
   const getStatusBadgeStyles = (status) => {
-    switch (status.toLowerCase()) {
+    switch ((status || 'draft').toLowerCase()) {
       case 'approved':
       case 'accepted':
-        return { backgroundColor: '#e6fbf4', color: '#10b981' };
+        return { backgroundColor: 'var(--success-light)', color: 'var(--success)' };
       case 'pending approval':
       case 'sent':
-        return { backgroundColor: '#fff7ed', color: '#f97316' };
+        return { backgroundColor: 'var(--warning-light)', color: 'var(--warning)' };
+      case 'rejected':
+        return { backgroundColor: 'var(--danger-light)', color: 'var(--danger)' };
       case 'draft':
       default:
-        return { backgroundColor: '#f1f5f9', color: '#64748b' };
+        return { backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' };
     }
   };
 
@@ -65,14 +67,14 @@ export default function QuotationPage() {
   const filteredQuotes = quotes.filter(q => {
     // 1. Search filter
     const matchesSearch = 
-      q.quotation_number.toLowerCase().includes(search.toLowerCase()) ||
+      (q.quotation_number || q.quote_id || '').toLowerCase().includes(search.toLowerCase()) ||
       (q.customer_name || '').toLowerCase().includes(search.toLowerCase());
       
     // 2. Status filter
-    const matchesStatus = statusFilter === 'All' || q.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesStatus = statusFilter === 'All' || (q.status || 'draft').toLowerCase() === statusFilter.toLowerCase();
     
     // 3. Type filter
-    const matchesType = typeFilter === 'All' || (q.customer_facility_type || '').toLowerCase() === typeFilter.toLowerCase();
+    const matchesType = typeFilter === 'All' || (q.customer_facility_type || q.institution_type || '').toLowerCase() === typeFilter.toLowerCase();
     
     // 4. Date filter
     let matchesDate = true;
@@ -144,7 +146,7 @@ export default function QuotationPage() {
         gap: '1rem',
         padding: '1rem 1.25rem',
         marginBottom: '1.5rem',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--bg-secondary)',
         border: '1px solid var(--border-color)',
         borderRadius: '12px',
         flexWrap: 'wrap'
@@ -225,7 +227,7 @@ export default function QuotationPage() {
           <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading quotations...</span>
         </div>
       ) : (
-        <div className="card-glass" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+        <div className="card-glass" style={{ padding: 0, overflow: 'hidden', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
           <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
             <table className="custom-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
               <thead>
@@ -252,7 +254,7 @@ export default function QuotationPage() {
                         </div>
                         <div>
                           <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '0.9375rem' }}>
-                            {quote.quotation_number}
+                            {quote.quotation_number || quote.quote_id}
                           </div>
                           <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '500', marginTop: '0.15rem' }}>
                             {formatDate(quote.created_at)}
@@ -262,9 +264,9 @@ export default function QuotationPage() {
                     </td>
                     <td style={{ padding: '1rem 1.5rem', fontSize: '0.9375rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
                       {quote.customer_name}
-                      {quote.customer_facility_type && (
+                      {(quote.customer_facility_type || quote.institution_type) && (
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '400', marginTop: '2px' }}>
-                          {quote.customer_facility_type}
+                          {quote.customer_facility_type || quote.institution_type}
                         </span>
                       )}
                     </td>
@@ -283,11 +285,11 @@ export default function QuotationPage() {
                           ...getStatusBadgeStyles(quote.status)
                         }}
                       >
-                        {quote.status.toLowerCase()}
+                        {(quote.status || 'draft').toLowerCase()}
                       </span>
                     </td>
                     <td style={{ padding: '1rem 1.5rem', fontWeight: '800', color: 'var(--text-primary)', fontSize: '0.9375rem', textAlign: 'right' }}>
-                      {formatCurrency(quote.total_amount)}
+                      {formatCurrency(quote.total_amount !== undefined ? quote.total_amount : (quote.monthly_cost || 0))}
                     </td>
                   </tr>
                 ))}

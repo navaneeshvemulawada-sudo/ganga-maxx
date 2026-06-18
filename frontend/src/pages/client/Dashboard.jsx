@@ -161,13 +161,13 @@ export default function ClientDashboard() {
                   {quotes.slice(0, 3).map((q) => (
                     <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: 'var(--bg-hover)', borderRadius: 'var(--radius-md)' }}>
                       <div>
-                        <strong style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{q.quotation_number} - {q.customer_name}</strong>
+                        <strong style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{q.quotation_number || q.quote_id} - {q.customer_name}</strong>
                         <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Created on: {new Date(q.created_at).toLocaleDateString('en-IN')}</span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <strong style={{ fontSize: '0.875rem', color: 'var(--text-primary)', display: 'block' }}>{formatCurrency(q.total_amount)}</strong>
-                        <span className={`badge ${q.status?.toLowerCase() === 'approved' || q.status?.toLowerCase() === 'accepted' ? 'badge-approved' : q.status?.toLowerCase() === 'draft' ? 'badge-draft' : 'badge-pending'}`} style={{ fontSize: '0.65rem' }}>
-                          {q.status}
+                        <strong style={{ fontSize: '0.875rem', color: 'var(--text-primary)', display: 'block' }}>{formatCurrency(q.total_amount !== undefined ? q.total_amount : (q.monthly_cost || 0))}</strong>
+                        <span className={`badge ${(q.status || 'draft').toLowerCase() === 'approved' || (q.status || 'draft').toLowerCase() === 'accepted' ? 'badge-approved' : (q.status || 'draft').toLowerCase() === 'draft' ? 'badge-draft' : 'badge-pending'}`} style={{ fontSize: '0.65rem' }}>
+                          {q.status || 'Draft'}
                         </span>
                       </div>
                     </div>

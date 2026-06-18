@@ -40,6 +40,52 @@ async function initializeDatabase() {
     await connection.query(createTableQuery);
     console.log('[Database] Table "quotations" is verified and ready.');
 
+    // Create users table
+    const createUsersTableQuery = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(80) NOT NULL UNIQUE,
+        email VARCHAR(120) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT 'user' NOT NULL,
+        is_approved TINYINT(1) DEFAULT 1 NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `;
+
+    console.log('[Database] Checking/creating users table schema...');
+    await connection.query(createUsersTableQuery);
+    console.log('[Database] Table "users" is verified and ready.');
+
+    // Check if we need to seed users
+    const [userRows] = await connection.query('SELECT COUNT(*) as count FROM users');
+    if (userRows[0].count === 0) {
+      console.log('[Database] Seeding default users...');
+      const crypto = require('crypto');
+      function hashPassword(password) {
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+        return `${salt}:${hash}`;
+      }
+      
+      const usersToSeed = [
+        { username: 'client', email: 'client@cleanbundle.ai', role: 'client', password: 'Demo@1234' },
+        { username: 'operations', email: 'operations@cleanbundle.ai', role: 'operations', password: 'Demo@1234' },
+        { username: 'supervisor', email: 'supervisor@cleanbundle.ai', role: 'supervisor', password: 'Demo@1234' },
+        { username: 'distributor', email: 'distributor@cleanbundle.ai', role: 'distributor', password: 'Demo@1234' },
+        { username: 'admin', email: 'demo@cleanbundle.ai', role: 'admin', password: 'Demo@1234' }
+      ];
+      
+      for (const u of usersToSeed) {
+        const passHash = hashPassword(u.password);
+        await connection.query(
+          'INSERT INTO users (username, email, password_hash, role, is_approved) VALUES (?, ?, ?, ?, 1)',
+          [u.username, u.email, passHash, u.role]
+        );
+      }
+      console.log('[Database] Default users seeded successfully.');
+    }
+
   } catch (error) {
     console.error('[Database Error] Failed to initialize database connection or create tables:', error.message);
     console.error('[Database Error] Please ensure MySQL is running and that credentials in backend/.env are correct.');

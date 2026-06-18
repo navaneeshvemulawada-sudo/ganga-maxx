@@ -22,8 +22,8 @@ export default function OperationsDashboard() {
         api.apiCall('/api/customers')
       ]);
 
-      const pendingQuotesCount = quotes.filter(q => q.status.toLowerCase() === 'pending approval').length;
-      const pendingReqsCount = reqs.filter(r => r.status.toLowerCase() === 'pending').length;
+      const pendingQuotesCount = quotes.filter(q => (q.status || 'draft').toLowerCase() === 'pending approval').length;
+      const pendingReqsCount = reqs.filter(r => (r.status || '').toLowerCase() === 'pending').length;
       const totalCustomersCount = customers.length;
 
       setMetrics([

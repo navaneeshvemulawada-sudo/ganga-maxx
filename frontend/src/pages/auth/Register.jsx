@@ -27,10 +27,14 @@ export default function Register() {
 
     try {
       await authService.register(username, email, password, role);
-      setSuccess('Account registered successfully! Redirecting to login...');
+      if (['operations', 'supervisor', 'admin'].includes(role)) {
+        setSuccess('Application submitted! Once approved by the company, you can access your account.');
+      } else {
+        setSuccess('Account registered successfully! Redirecting to login...');
+      }
       setTimeout(() => {
         navigate('/login');
-      }, 1500);
+      }, ['operations', 'supervisor', 'admin'].includes(role) ? 3500 : 1500);
     } catch (err) {
       setError(err.message || 'Registration failed. Try a different username/email.');
     } finally {
@@ -191,6 +195,11 @@ export default function Register() {
                 <option value="distributor">Distributor (Dealer)</option>
                 <option value="admin">Admin (Company Internal Staff)</option>
               </select>
+              <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'block', lineHeight: '1.3' }}>
+                {['client', 'distributor'].includes(role) 
+                  ? '✓ Clients and Distributors get free, immediate account activation.' 
+                  : '⚠ Staff roles (Operations, Supervisor, Admin) require company verification and admin approval.'}
+              </span>
             </div>
 
             {/* Register action */}

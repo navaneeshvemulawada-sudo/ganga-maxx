@@ -417,7 +417,7 @@ export default function AIRecommendation() {
       </div>
 
       {/* Proposal Notes section */}
-      <div className="card-glass" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+      <div className="card-glass" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
         <h3 style={{ fontSize: '1.125rem', fontWeight: '800', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Sparkles size={18} style={{ color: 'var(--accent-primary)' }} />
           <span>AI Proposal Notes & Comments</span>

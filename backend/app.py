@@ -30,6 +30,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(customer_bp)
     app.register_blueprint(quotation_bp)
+    app.register_blueprint(quotation_bp, url_prefix="/api/quotation", name="quotation_singular")
     app.register_blueprint(recommend_bp)
     app.register_blueprint(inventory_bp)
     app.register_blueprint(order_bp)

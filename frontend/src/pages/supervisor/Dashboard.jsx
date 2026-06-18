@@ -24,7 +24,7 @@ export default function SupervisorDashboard() {
       const lowStock = inventory.filter(p => p.stock <= p.min_stock);
       setLowStockProducts(lowStock);
 
-      const pendingReqsCount = reqs.filter(r => r.status.toLowerCase() === 'pending').length;
+      const pendingReqsCount = reqs.filter(r => (r.status || '').toLowerCase() === 'pending').length;
 
       setMetrics([
         { label: 'Stock Alerts', value: `${lowStock.length} Low Item${lowStock.length === 1 ? '' : 's'}`, icon: ShieldAlert, color: 'var(--danger)', desc: 'Requires replenishment soon' },

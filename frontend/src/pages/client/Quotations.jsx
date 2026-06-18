@@ -33,14 +33,14 @@ export default function ClientQuotations() {
   };
 
   const getStatusBadge = (status) => {
-    const s = status.toLowerCase();
+    const s = (status || 'draft').toLowerCase();
     if (s === 'approved' || s === 'accepted') return <span className="badge badge-approved">Approved</span>;
     if (s === 'pending approval') return <span className="badge badge-pending">Pending Approval</span>;
-    return <span className="badge badge-draft">{status}</span>;
+    return <span className="badge badge-draft">{status || 'Draft'}</span>;
   };
 
   const handleReorder = (q) => {
-    alert(`Reorder request submitted for quote ${q.quotation_number}! Our warehouse logistics team has been notified.`);
+    alert(`Reorder request submitted for quote ${q.quotation_number || q.quote_id}! Our warehouse logistics team has been notified.`);
   };
 
   return (
@@ -85,17 +85,17 @@ export default function ClientQuotations() {
               <tbody>
                 {quotes.map((q) => (
                   <tr key={q.id}>
-                    <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{q.quotation_number}</td>
+                    <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{q.quotation_number || q.quote_id}</td>
                     <td style={{ fontWeight: '600' }}>{q.customer_name}</td>
                     <td>{q.items ? q.items.length : 6} items</td>
-                    <td>{getStatusBadge(q.status)}</td>
-                    <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{formatCurrency(q.total_amount)}</td>
+                    <td>{getStatusBadge(q.status || 'draft')}</td>
+                    <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{formatCurrency(q.total_amount !== undefined ? q.total_amount : (q.monthly_cost || 0))}</td>
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'center' }}>
                         <button onClick={() => navigate(`/quotations/${q.id}`)} className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '28px' }}>
                           Open
                         </button>
-                        {q.status.toLowerCase() === 'approved' && (
+                        {(q.status || 'draft').toLowerCase() === 'approved' && (
                           <button onClick={() => handleReorder(q)} className="btn btn-success" style={{ padding: '4px 8px', fontSize: '0.75rem', height: '28px', gap: '2px' }}>
                             <RefreshCw size={12} />
                             Reorder

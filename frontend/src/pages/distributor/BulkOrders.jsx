@@ -145,19 +145,19 @@ export default function DistributorBulkOrders() {
   };
 
   const getStatusBadgeStyles = (status) => {
-    switch (status.toLowerCase()) {
+    switch ((status || '').toLowerCase()) {
       case 'delivered':
-        return { backgroundColor: '#e6fbf4', color: '#10b981' };
+        return { backgroundColor: 'var(--success-light)', color: 'var(--success)' };
       case 'in transit':
-        return { backgroundColor: '#e0f2fe', color: '#0284c7' };
+        return { backgroundColor: 'var(--info-light)', color: 'var(--info)' };
       case 'processing':
       default:
-        return { backgroundColor: '#fff7ed', color: '#f97316' };
+        return { backgroundColor: 'var(--warning-light)', color: 'var(--warning)' };
     }
   };
 
   const getTimelineMilestones = (order) => {
-    const status = order.status.toLowerCase();
+    const status = (order.status || '').toLowerCase();
     const isProcessing = status === 'processing';
     const isInTransit = status === 'in transit';
     const isDelivered = status === 'delivered';
@@ -195,7 +195,7 @@ export default function DistributorBulkOrders() {
             <span>Loading product list...</span>
           </div>
         ) : (
-          <div className="card-glass" style={{ padding: 0, overflow: 'hidden', backgroundColor: '#fff', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+          <div className="card-glass" style={{ padding: 0, overflow: 'hidden', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
             <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
               <table className="custom-table">
                 <thead>
@@ -306,7 +306,7 @@ export default function DistributorBulkOrders() {
               const isExpanded = expandedOrderId === order.id;
               const milestones = getTimelineMilestones(order);
               return (
-                <div key={order.id} className="card-glass" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: '#fff' }}>
+                <div key={order.id} className="card-glass" style={{ padding: 0, overflow: 'hidden', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-secondary)' }}>
                   {/* Collapsible Header */}
                   <div
                     onClick={() => toggleOrderExpand(order.id)}
@@ -372,7 +372,7 @@ export default function DistributorBulkOrders() {
                           </h4>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {order.items.map((item, idx) => (
-                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                 <div>
                                   <strong style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>{item.product_name}</strong>
                                   <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Quantity: {item.quantity} units</span>
