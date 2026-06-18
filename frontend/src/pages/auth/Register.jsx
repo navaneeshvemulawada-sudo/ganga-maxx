@@ -40,22 +40,19 @@ export default function Register() {
 
       if (sbError) throw sbError;
 
-      if (data.session) {
-        localStorage.setItem('token', data.session.access_token);
-        localStorage.setItem('user', JSON.stringify({
-          id: data.user.id,
-          username: username,
-          email: email,
-          role: role,
-          is_approved: true
-        }));
-        setSuccess('Account registered successfully! Redirecting...');
-        setTimeout(() => {
-          navigate('/');
-        }, 1500);
-      } else {
-        setSuccess('Check your email and confirm your account before logging in.');
-      }
+      // Force sign out to prevent auto-login
+      await supabase.auth.signOut();
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
+      const message = data.session 
+        ? 'Account registered successfully! Please sign in using your credentials.'
+        : 'Check your email and confirm your account before logging in.';
+      
+      setSuccess(message + ' Redirecting to sign in...');
+      setTimeout(() => {
+        navigate('/login', { state: { email: email, message: message } });
+      }, 2500);
     } catch (err) {
       setError(err.message || 'Registration failed. Try a different username/email.');
     } finally {

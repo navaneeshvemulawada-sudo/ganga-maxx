@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Sparkles, Mail, Lock, ShieldCheck, Loader2 } from 'lucide-react';
 import authService from '../../services/authService';
 import bgImage from '../../assets/login_background.png';
 import { supabase } from '../../supabaseClient';
 
 export default function Login() {
-  const [username, setUsername] = useState('demo@cleanbundle.ai');
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const [username, setUsername] = useState(location.state?.email || 'demo@cleanbundle.ai');
   const [password, setPassword] = useState('Demo@1234');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
 
   // Redirect if authenticated
   useEffect(() => {
@@ -18,6 +21,18 @@ export default function Login() {
       navigate('/');
     }
   }, [navigate]);
+
+  // Handle state passed from redirect (e.g. from registration)
+  useEffect(() => {
+    if (location.state?.email) {
+      setUsername(location.state.email);
+    }
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clean up the history state so the message doesn't persist on page refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
@@ -28,6 +43,7 @@ export default function Login() {
 
     setLoading(true);
     setError('');
+    setSuccessMessage('');
 
     try {
       const { data, error: sbError } = await supabase.auth.signInWithPassword({
@@ -123,6 +139,21 @@ export default function Login() {
               fontWeight: '500'
             }}>
               {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div style={{
+              backgroundColor: 'var(--success-light)',
+              color: 'var(--success)',
+              fontSize: '0.8125rem',
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1.5rem',
+              border: '1px solid rgba(16, 185, 129, 0.1)',
+              fontWeight: '500'
+            }}>
+              {successMessage}
             </div>
           )}
 
