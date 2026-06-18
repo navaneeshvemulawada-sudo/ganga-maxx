@@ -1,19 +1,65 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import { supabase } from '../supabaseClient';
 
 export default function Layout() {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    if (!token) {
-      navigate('/login');
-    }
-  }, [token, navigate]);
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+        
+        if (!currentSession) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/login');
+        } else {
+          // Keep local storage items in sync
+          if (!localStorage.getItem('token')) {
+            localStorage.setItem('token', currentSession.access_token);
+            localStorage.setItem('user', JSON.stringify({
+              id: currentSession.user.id,
+              username: currentSession.user.email.split('@')[0],
+              email: currentSession.user.email,
+              role: currentSession.user.user_metadata?.role || 'admin',
+              is_approved: true
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Session check error:', err);
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!token) {
+    checkSession();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--text-secondary)',
+        fontFamily: 'var(--font-sans)'
+      }}>
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  if (!session) {
     return null; // Don't render layout if not authorized
   }
 

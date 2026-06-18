@@ -49,21 +49,13 @@ export default function Register() {
           role: role,
           is_approved: true
         }));
-      } else if (data.user) {
-        localStorage.setItem('token', 'supabase-pending-confirm');
-        localStorage.setItem('user', JSON.stringify({
-          id: data.user.id,
-          username: username,
-          email: email,
-          role: role,
-          is_approved: true
-        }));
+        setSuccess('Account registered successfully! Redirecting...');
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      } else {
+        setSuccess('Check your email and confirm your account before logging in.');
       }
-
-      setSuccess('Account registered successfully! Redirecting...');
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
     } catch (err) {
       setError(err.message || 'Registration failed. Try a different username/email.');
     } finally {
