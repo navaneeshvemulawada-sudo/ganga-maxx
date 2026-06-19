@@ -2,75 +2,171 @@ const db = require('../config/database');
 
 const QuotationModel = {
   /**
-   * Generates the next quote ID (e.g. QT001, QT002, ...)
+   * Generates the next quotation number (e.g. QTN-2026-1001, QTN-2026-1002, ...)
    * Assumes it's being executed within an active transaction with a client.
    * 
    * @param {Object} client - pg pool client
    */
-  async generateNextQuoteId(client) {
-    // Select the latest quote_id and lock the row to prevent concurrent duplicate generation
+  async generateNextQuotationNumber(client) {
+    const currentYear = new Date().getFullYear();
+    const prefix = `QTN-${currentYear}-`;
+    
+    // Select the latest quotation_number for this year and lock it to prevent concurrent duplicates
     const { rows } = await client.query(
-      'SELECT quote_id FROM quotations ORDER BY id DESC LIMIT 1 FOR UPDATE'
+      'SELECT quotation_number FROM quotations WHERE quotation_number LIKE $1 ORDER BY id DESC LIMIT 1 FOR UPDATE',
+      [`${prefix}%`]
     );
 
     if (rows.length === 0) {
-      return 'QT001';
+      return `${prefix}1001`;
     }
 
-    const lastQuoteId = rows[0].quote_id;
-    const match = lastQuoteId.match(/^QT(\d+)$/);
+    const lastQuotationNumber = rows[0].quotation_number;
+    const suffixStr = lastQuotationNumber.slice(prefix.length);
+    const lastNum = parseInt(suffixStr, 10);
     
-    if (!match) {
-      return 'QT001';
+    if (isNaN(lastNum)) {
+      return `${prefix}1001`;
     }
 
-    const lastNum = parseInt(match[1], 10);
     const nextNum = lastNum + 1;
-    const paddedNum = String(nextNum).padStart(3, '0');
-    return `QT${paddedNum}`;
+    return `${prefix}${nextNum}`;
   },
 
   /**
-   * Creates a new quotation record using a database transaction
+   * Creates a new customer and quotation record using a database transaction
    * 
-   * @param {Object} data - Quotation schema data
+   * @param {Object} data - Quotation and Customer schema data combined
    */
   async create(data) {
     const client = await db.pool.connect();
     try {
       await client.query('BEGIN');
 
-      // Automatically generate sequential quote_id inside transaction
-      const quote_id = await this.generateNextQuoteId(client);
+      // 1. Find or create customer record
+      let customerId = null;
       
-      const query = `
+      if (data.email) {
+        const { rows: customerRows } = await client.query(
+          'SELECT id FROM customers WHERE email = $1 LIMIT 1',
+          [data.email.trim()]
+        );
+        if (customerRows.length > 0) {
+          customerId = customerRows[0].id;
+        }
+      }
+
+      if (!customerId && data.company_name) {
+        const { rows: customerRows } = await client.query(
+          'SELECT id FROM customers WHERE institution_name = $1 LIMIT 1',
+          [data.company_name.trim()]
+        );
+        if (customerRows.length > 0) {
+          customerId = customerRows[0].id;
+        }
+      }
+
+      if (!customerId) {
+        // Create new customer
+        const insertCustomerQuery = `
+          INSERT INTO customers (
+            institution_name, 
+            institution_type, 
+            contact_person, 
+            email, 
+            phone, 
+            number_of_floors, 
+            staff_count, 
+            cleaning_frequency, 
+            created_by
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING id
+        `;
+        const customerValues = [
+          (data.company_name && data.company_name.trim()) || (data.customer_name && data.customer_name.trim()) || 'Unnamed Institution',
+          data.institution_type || 'Other',
+          data.customer_name ? data.customer_name.trim() : null,
+          data.email ? data.email.trim() : null,
+          data.phone ? data.phone.trim() : null,
+          data.floors !== undefined && data.floors !== null ? parseInt(data.floors, 10) : null,
+          data.staff_count !== undefined && data.staff_count !== null ? parseInt(data.staff_count, 10) : null,
+          data.cleaning_frequency || null,
+          data.generated_by || null
+        ];
+        
+        try {
+          const { rows: insertRows } = await client.query(insertCustomerQuery, customerValues);
+          customerId = insertRows[0].id;
+        } catch (err) {
+          console.error('[DB Customer Insert Error] Failed to create customer record:', {
+            query: insertCustomerQuery,
+            params: customerValues,
+            message: err.message,
+            detail: err.detail || null,
+            table: err.table || null,
+            column: err.column || null,
+            constraint: err.constraint || null
+          });
+          throw err;
+        }
+      }
+
+      // 2. Generate sequential quotation_number
+      const quotation_number = await this.generateNextQuotationNumber(client);
+      
+      // 3. Insert quotation into quotations table
+      const insertQuotationQuery = `
         INSERT INTO quotations (
-          quote_id, customer_name, company_name, email, phone, 
-          institution_type, floors, staff_count, cleaning_frequency, 
-          monthly_cost, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          quotation_number, 
+          customer_id, 
+          generated_by, 
+          monthly_cost, 
+          total_cost, 
+          status, 
+          ai_summary
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
       `;
       
-      const values = [
-        quote_id,
-        data.customer_name,
-        data.company_name || null,
-        data.email,
-        data.phone || null,
-        data.institution_type,
-        data.floors !== undefined ? data.floors : null,
-        data.staff_count !== undefined ? data.staff_count : null,
-        data.cleaning_frequency,
+      const quotationValues = [
+        quotation_number,
+        customerId,
+        data.generated_by || null,
         data.monthly_cost,
-        data.status || 'Generated'
+        data.total_cost !== undefined && data.total_cost !== null ? data.total_cost : data.monthly_cost,
+        data.status || 'Generated',
+        data.ai_summary || null
       ];
 
-      await client.query(query, values);
+      let newQuotationId;
+      try {
+        const { rows: insertQuoteRows } = await client.query(insertQuotationQuery, quotationValues);
+        newQuotationId = insertQuoteRows[0].id;
+      } catch (err) {
+        console.error('[DB Quotation Insert Error] Failed to create quotation record:', {
+          query: insertQuotationQuery,
+          params: quotationValues,
+          message: err.message,
+          detail: err.detail || null,
+          table: err.table || null,
+          column: err.column || null,
+          constraint: err.constraint || null
+        });
+        throw err;
+      }
+
       await client.query('COMMIT');
       
-      return quote_id;
+      return { id: newQuotationId, quotation_number };
     } catch (error) {
       await client.query('ROLLBACK');
+      console.error('[Database Transaction Error] Quotation creation failed:', {
+        message: error.message,
+        detail: error.detail || null,
+        table: error.table || null,
+        column: error.column || null,
+        constraint: error.constraint || null
+      });
       throw error;
     } finally {
       client.release();

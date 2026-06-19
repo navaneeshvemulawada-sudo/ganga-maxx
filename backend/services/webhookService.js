@@ -18,7 +18,8 @@ const WebhookService = {
 
     try {
       const payload = {
-        quote_id: quotationData.quote_id,
+        quotation_number: quotationData.quotation_number || quotationData.quote_id,
+        quote_id: quotationData.quote_id || quotationData.quotation_number,
         customer_name: quotationData.customer_name,
         company_name: quotationData.company_name || null,
         email: quotationData.email,

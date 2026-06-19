@@ -44,7 +44,15 @@ const db = {
       }
       return res;
     } catch (error) {
-      console.error('[Database Query Error] Failed to execute query:', error.message);
+      console.error('[Database Query Error] Failed to execute query:', {
+        message: error.message,
+        query: text,
+        params: params,
+        detail: error.detail || null,
+        table: error.table || null,
+        column: error.column || null,
+        constraint: error.constraint || null
+      });
       throw error;
     }
   },
