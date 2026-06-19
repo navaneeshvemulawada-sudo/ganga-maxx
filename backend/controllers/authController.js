@@ -116,8 +116,16 @@ const authController = {
       const hashedPassword = hashPassword(password);
       
       // Enforce approval gate (clients & distributors are auto-approved, staff roles require admin sign-off)
-      const userRole = role || 'client';
-      const isApproved = !['operations', 'supervisor', 'admin'].includes(userRole.toLowerCase());
+      let userRole = role || 'client';
+      const roleLower = userRole.toLowerCase().trim();
+      
+      // Normalize common spelling variants
+      if (roleLower === 'supervisior') {
+        userRole = 'supervisor';
+      }
+
+      const requiresApproval = ['operations', 'supervisor', 'admin'].includes(userRole.toLowerCase());
+      const isApproved = !requiresApproval;
 
       // Insert into PostgreSQL users table and return the generated serial ID
       await db.query(

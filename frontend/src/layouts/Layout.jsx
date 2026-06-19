@@ -32,8 +32,10 @@ export default function Layout() {
           }
 
           // Determine user role (profile role or metadata role)
-          const userRole = profile ? profile.role : (currentSession.user.user_metadata?.role || 'client');
-          const requiresApproval = ['operations', 'supervisor', 'admin'].includes(String(userRole).toLowerCase());
+          const rawRole = profile ? profile.role : (currentSession.user.user_metadata?.role || 'client');
+          const roleLower = String(rawRole).toLowerCase().trim();
+          const userRole = roleLower === 'supervisior' ? 'supervisor' : rawRole;
+          const requiresApproval = ['operations', 'supervisor', 'admin', 'supervisior'].includes(roleLower);
 
           if (requiresApproval) {
             if (!profile || !profile.is_approved) {

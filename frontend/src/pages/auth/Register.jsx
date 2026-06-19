@@ -40,7 +40,9 @@ export default function Register() {
 
       if (sbError) throw sbError;
 
-      const requiresApproval = ['operations', 'supervisor', 'admin', 'Operations', 'Supervisor', 'Admin'].includes(role);
+      const roleLower = (role || '').toLowerCase().trim();
+      const normalizedRole = roleLower === 'supervisior' ? 'supervisor' : role;
+      const requiresApproval = ['operations', 'supervisor', 'admin', 'supervisior'].includes(roleLower);
       const isApproved = !requiresApproval;
 
       // Create profile in public.users table
@@ -51,7 +53,7 @@ export default function Register() {
             supabase_uid: data.user.id,
             full_name: username,
             email: email,
-            role: role,
+            role: normalizedRole,
             status: isApproved ? 'Active' : 'Pending',
             is_approved: isApproved
           }]);
