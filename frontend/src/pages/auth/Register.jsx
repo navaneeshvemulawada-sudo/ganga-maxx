@@ -54,7 +54,7 @@ export default function Register() {
             full_name: username,
             email: email,
             role: normalizedRole,
-            status: isApproved ? 'Active' : 'Pending',
+            status: isApproved ? 'Active' : 'Inactive',
             is_approved: isApproved
           }]);
         if (profileError) {

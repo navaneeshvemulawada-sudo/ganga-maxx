@@ -93,7 +93,7 @@ export default function AdminUsers() {
             full_name: userForm.username,
             email: userForm.email,
             role: userForm.role,
-            status: isApproved ? 'Active' : 'Pending',
+            status: isApproved ? 'Active' : 'Inactive',
             is_approved: isApproved
           }]);
         
