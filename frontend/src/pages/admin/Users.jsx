@@ -194,7 +194,7 @@ export default function AdminUsers() {
                       const style = getRoleBadgeStyle(u.role);
                       return (
                         <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.15s' }}>
-                          <td style={{ fontWeight: '600', fontSize: '0.8125rem' }}>{u.username}</td>
+                          <td style={{ fontWeight: '600', fontSize: '0.8125rem' }}>{u.full_name || u.username}</td>
                           <td style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{u.email}</td>
                           <td>
                             <span className="badge" style={{ backgroundColor: style.bg, color: style.text, fontSize: '0.6875rem', fontWeight: '700', textTransform: 'capitalize' }}>
@@ -259,7 +259,7 @@ export default function AdminUsers() {
                       const style = getRoleBadgeStyle(u.role);
                       return (
                         <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.15s' }}>
-                          <td style={{ fontWeight: '600', fontSize: '0.8125rem' }}>{u.username}</td>
+                          <td style={{ fontWeight: '600', fontSize: '0.8125rem' }}>{u.full_name || u.username}</td>
                           <td style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{u.email}</td>
                           <td>
                             <span className="badge" style={{ backgroundColor: style.bg, color: style.text, fontSize: '0.6875rem', fontWeight: '700', textTransform: 'capitalize' }}>
