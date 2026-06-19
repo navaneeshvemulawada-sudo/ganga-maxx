@@ -342,12 +342,12 @@ export default function Admin() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: '500' }}>Database Type:</span>
-                <span style={{ fontWeight: '600' }}>SQLite 3 (Local)</span>
+                <span style={{ fontWeight: '600' }}>pg (postgresql)</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: '500' }}>Database Location:</span>
                 <code style={{ fontSize: '0.7rem', wordBreak: 'break-all', backgroundColor: 'var(--bg-primary)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                  backend/instance/ganga_maxx.db
+                  tdxkhkrcmnkspxmutzpb.supabase.co
                 </code>
               </div>
             </div>
