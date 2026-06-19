@@ -1,50 +1,53 @@
 import { supabase } from '../supabaseClient';
+import { apiCall } from './api';
+
+function mapFacilityType(type) {
+  const t = (type || '').toLowerCase();
+  if (t.includes('health') || t.includes('hosp')) return 'Hospital';
+  if (t.includes('educ') || t.includes('school')) return 'School';
+  return 'Office';
+}
+
+function mapCleaningFrequency(freq) {
+  const f = (freq || '').toLowerCase();
+  if (f.includes('daily') || f.includes('hourly')) return 'Daily';
+  return 'Weekly';
+}
 
 /**
- * Quotation management client services using Supabase database.
+ * Quotation management client services using the Express backend and Supabase.
  */
 export const quotationService = {
   /**
-   * Retrieve all quotations from Supabase.
+   * Retrieve all quotations from backend API.
    *
    * @returns {Promise<Array>} List of quotation objects.
    */
   async getAll() {
-    const { data, error } = await supabase
-      .from('quotations')
-      .select('*, customer:customers(institution_name, institution_type)')
-      .order('id', { ascending: false });
-    if (error) throw error;
-    
+    const data = await apiCall('/api/quotations');
     return data.map(q => ({
       ...q,
-      customer_name: q.customer?.institution_name || 'N/A',
-      customer_facility_type: q.customer?.institution_type || 'N/A'
+      customer_name: q.company_name || q.customer_name || 'N/A',
+      customer_facility_type: q.institution_type || 'N/A'
     }));
   },
 
   /**
    * Retrieve a specific quotation by ID.
    *
-   * @param {number|string} id - Quotation ID.
+   * @param {number|string} id - Quotation ID or number.
    * @returns {Promise<Object>} Quotation object with lines list.
    */
   async getById(id) {
-    const { data, error } = await supabase
-      .from('quotations')
-      .select('*, customer:customers(*), items:quotation_items(*, product:products(*))')
-      .eq('id', id)
-      .single();
-    if (error) throw error;
-    
+    const data = await apiCall(`/api/quotations/${id}`);
     return {
       ...data,
-      customer_name: data.customer?.institution_name || 'N/A',
-      customer_facility_type: data.customer?.institution_type || 'N/A',
+      customer_name: data.company_name || data.customer_name || 'N/A',
+      customer_facility_type: data.institution_type || 'N/A',
       notes: data.ai_summary || '',
       items: (data.items || []).map(item => ({
         id: item.id,
-        product_name: item.product?.product_name || item.product_name || `Product #${item.product_id}`,
+        product_name: item.product_name || `Product #${item.product_id}`,
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.total_price
@@ -59,125 +62,60 @@ export const quotationService = {
    * @returns {Promise<Object>} Created quotation object.
    */
   async create(quotationData) {
-    const { customer_id, tax_rate = 18.0, discount = 0.0, items = [], status = 'Draft', notes = '' } = quotationData;
+    const { customer_id, items = [] } = quotationData;
 
-    // 1. Calculate monthly_cost (subtotal of items) and total_cost (with tax and discount)
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    const taxAmount = subtotal * (tax_rate / 100);
-    const totalCost = subtotal + taxAmount - discount;
-
-    const quotationNumber = `QTN-2026-${Math.floor(Math.random() * 90000) + 10000}`;
-
-    // 2. Fetch logged in user id from public.users mapping or default to null
-    let generatedBy = null;
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
+    // 1. Fetch customer details from Supabase if customer_id is provided
+    let customerDetails = {};
+    if (customer_id) {
       try {
-        const u = JSON.parse(userStr);
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', u.email)
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', customer_id)
           .single();
-        if (userData) {
-          generatedBy = userData.id;
+        if (customer) {
+          customerDetails = {
+            customer_name: customer.contact_person,
+            company_name: customer.institution_name,
+            email: customer.email,
+            phone: customer.phone,
+            institution_type: customer.institution_type,
+            floors: customer.number_of_floors,
+            staff_count: customer.staff_count,
+            cleaning_frequency: customer.cleaning_frequency
+          };
         }
-      } catch (e) {
-        console.error('Error fetching generated_by user:', e);
+      } catch (err) {
+        console.error('Error fetching customer details for quote payload:', err);
       }
     }
 
-    // 3. Insert into quotations
-    const { data: quote, error: quoteError } = await supabase
-      .from('quotations')
-      .insert([{
-        quotation_number: quotationNumber,
-        customer_id: customer_id,
-        generated_by: generatedBy,
-        monthly_cost: subtotal,
-        total_cost: totalCost,
-        status: status,
-        ai_summary: notes
-      }])
-      .select()
-      .single();
+    const customer_name = quotationData.customer_name || customerDetails.customer_name || 'Unnamed Contact';
+    const company_name = quotationData.company_name || customerDetails.company_name || 'Unnamed Institution';
+    const email = quotationData.email || customerDetails.email || `customer-${Date.now()}@cleanbundle.ai`;
+    const phone = quotationData.phone || customerDetails.phone || '';
+    const institution_type = quotationData.institution_type || customerDetails.institution_type || 'Office';
+    const floors = quotationData.floors !== undefined ? quotationData.floors : (customerDetails.floors !== undefined ? customerDetails.floors : 1);
+    const staff_count = quotationData.staff_count !== undefined ? quotationData.staff_count : (customerDetails.staff_count !== undefined ? customerDetails.staff_count : 0);
+    const cleaning_frequency = quotationData.cleaning_frequency || customerDetails.cleaning_frequency || 'Daily';
 
-    if (quoteError) throw quoteError;
+    // 2. Call backend API to create customer, generate quotation_number and quotation
+    const response = await apiCall('/api/quotations', {
+      method: 'POST',
+      body: {
+        customer_name,
+        company_name,
+        email,
+        phone,
+        institution_type: mapFacilityType(institution_type),
+        floors: parseInt(floors, 10) || 1,
+        staff_count: parseInt(staff_count, 10) || 0,
+        cleaning_frequency: mapCleaningFrequency(cleaning_frequency)
+      }
+    });
 
-    // 4. Look up product IDs from product names
-    const productNames = items.map(item => item.product_name);
-    const { data: products } = await supabase
-      .from('products')
-      .select('id, product_name')
-      .in('product_name', productNames);
-
-    const productMap = {};
-    if (products) {
-      products.forEach(p => {
-        productMap[p.product_name] = p.id;
-      });
-    }
-
-    // 5. Insert quotation items
-    const itemsPayload = items.map(item => ({
-      quotation_id: quote.id,
-      product_id: productMap[item.product_name] || null,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      total_price: item.quantity * item.unit_price
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('quotation_items')
-      .insert(itemsPayload);
-
-    if (itemsError) throw itemsError;
-
-    return {
-      ...quote,
-      items
-    };
-  },
-
-  /**
-   * Update an existing quotation.
-   *
-   * @param {number|string} id - Quotation ID.
-   * @param {Object} quotationData - Updated fields.
-   * @returns {Promise<Object>} Updated quotation.
-   */
-  async update(id, quotationData) {
-    const { status, tax_rate = 18.0, discount = 0.0, items = [], notes } = quotationData;
-
-    const updatePayload = {};
-    if (status) updatePayload.status = status;
-    if (notes !== undefined) updatePayload.ai_summary = notes;
-
+    // 3. If there are quotation items, insert them into quotation_items using Supabase client
     if (items.length > 0) {
-      const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-      const taxAmount = subtotal * (tax_rate / 100);
-      updatePayload.monthly_cost = subtotal;
-      updatePayload.total_cost = subtotal + taxAmount - discount;
-    }
-
-    const { data: quote, error: quoteError } = await supabase
-      .from('quotations')
-      .update(updatePayload)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (quoteError) throw quoteError;
-
-    if (items.length > 0) {
-      // Delete existing items
-      const { error: deleteError } = await supabase
-        .from('quotation_items')
-        .delete()
-        .eq('quotation_id', id);
-        
-      if (deleteError) throw deleteError;
-
       // Look up product IDs from product names
       const productNames = items.map(item => item.product_name);
       const { data: products } = await supabase
@@ -192,9 +130,9 @@ export const quotationService = {
         });
       }
 
-      // Insert new items
+      // Insert quotation items
       const itemsPayload = items.map(item => ({
-        quotation_id: id,
+        quotation_id: response.id,
         product_id: productMap[item.product_name] || null,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -205,9 +143,50 @@ export const quotationService = {
         .from('quotation_items')
         .insert(itemsPayload);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error inserting quotation items:', itemsError);
+      }
     }
 
+    return {
+      id: response.id,
+      quotation_number: response.quotation_number,
+      ...response,
+      items
+    };
+  },
+
+  /**
+   * Update an existing quotation.
+   *
+   * @param {number|string} id - Quotation ID.
+   * @param {Object} quotationData - Updated fields.
+   * @returns {Promise<Object>} Updated quotation.
+   */
+  async update(id, quotationData) {
+    if (quotationData.status) {
+      const response = await apiCall('/api/quotations/process', {
+        method: 'POST',
+        body: {
+          id: id,
+          status: quotationData.status
+        }
+      });
+      return response;
+    }
+
+    // Fallback to Supabase for non-status updates (e.g. updating notes)
+    const updatePayload = {};
+    if (quotationData.notes !== undefined) updatePayload.ai_summary = quotationData.notes;
+    
+    const { data: quote, error: quoteError } = await supabase
+      .from('quotations')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (quoteError) throw quoteError;
     return quote;
   },
 
