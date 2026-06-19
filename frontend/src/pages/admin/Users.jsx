@@ -155,59 +155,53 @@ export default function AdminUsers() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-        {/* Left: Users List Table */}
-        <div className="card-glass" style={{ padding: '1.5rem 2rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
-            <Users size={20} style={{ color: 'var(--accent-primary)' }} />
-            <span>Registered Accounts</span>
-          </h3>
+        {/* Left: Lists Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+          
+          {/* Pending Approvals Table Card */}
+          <div className="card-glass" style={{ padding: '1.5rem 2rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+              <ShieldAlert size={20} style={{ color: 'var(--warning)' }} />
+              <span>Pending Approvals</span>
+            </h3>
 
-          {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4rem' }}>
-              <span>Loading registered user list...</span>
-            </div>
-          ) : fetchError ? (
-            <div style={{ padding: '2rem', color: 'var(--danger)', textAlign: 'center' }}>
-              <ShieldAlert size={32} style={{ marginBottom: '0.5rem' }} />
-              <p>{fetchError}</p>
-            </div>
-          ) : (
-            <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
-              <table className="custom-table" style={{ width: '100%' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <th>Username</th>
-                    <th>Email Address</th>
-                    <th>Access Role</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'center', width: '130px' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usersList.map(u => {
-                    const style = getRoleBadgeStyle(u.role);
-                    return (
-                      <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.15s' }}>
-                        <td style={{ fontWeight: '600', fontSize: '0.8125rem' }}>{u.username}</td>
-                        <td style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{u.email}</td>
-                        <td>
-                          <span className="badge" style={{ backgroundColor: style.bg, color: style.text, fontSize: '0.6875rem', fontWeight: '700', textTransform: 'capitalize' }}>
-                            {u.role}
-                          </span>
-                        </td>
-                        <td>
-                          {u.is_approved ? (
-                            <span className="badge" style={{ backgroundColor: '#e6fbf4', color: '#10b981', fontSize: '0.6875rem', fontWeight: '700' }}>
-                              Active
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                <span>Loading pending approvals...</span>
+              </div>
+            ) : fetchError ? (
+              <div style={{ padding: '1rem', color: 'var(--danger)', textAlign: 'center' }}>
+                <p>{fetchError}</p>
+              </div>
+            ) : usersList.filter(u => !u.is_approved).length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', border: '1px dashed var(--border-color)', borderRadius: '8px' }}>
+                <ShieldCheck size={32} style={{ color: '#10b981', marginBottom: '0.5rem', display: 'inline-block' }} />
+                <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '500' }}>No pending approvals. All registered users are verified.</p>
+              </div>
+            ) : (
+              <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+                <table className="custom-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <th>Username</th>
+                      <th>Email Address</th>
+                      <th>Access Role</th>
+                      <th style={{ textAlign: 'center', width: '130px' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usersList.filter(u => !u.is_approved).map(u => {
+                      const style = getRoleBadgeStyle(u.role);
+                      return (
+                        <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.15s' }}>
+                          <td style={{ fontWeight: '600', fontSize: '0.8125rem' }}>{u.username}</td>
+                          <td style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{u.email}</td>
+                          <td>
+                            <span className="badge" style={{ backgroundColor: style.bg, color: style.text, fontSize: '0.6875rem', fontWeight: '700', textTransform: 'capitalize' }}>
+                              {u.role}
                             </span>
-                          ) : (
-                            <span className="badge" style={{ backgroundColor: '#fff7ed', color: '#f97316', fontSize: '0.6875rem', fontWeight: '700' }}>
-                              Pending Approval
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          {!u.is_approved && (
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
                             <button
                               onClick={() => handleApproveUser(u.id)}
                               className="btn btn-success"
@@ -223,15 +217,68 @@ export default function AdminUsers() {
                               <Check size={12} />
                               <span>Approve</span>
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Registered Accounts Table Card */}
+          <div className="card-glass" style={{ padding: '1.5rem 2rem', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+              <Users size={20} style={{ color: 'var(--accent-primary)' }} />
+              <span>Registered Accounts</span>
+            </h3>
+
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4rem' }}>
+                <span>Loading registered user list...</span>
+              </div>
+            ) : fetchError ? (
+              <div style={{ padding: '2rem', color: 'var(--danger)', textAlign: 'center' }}>
+                <ShieldAlert size={32} style={{ marginBottom: '0.5rem' }} />
+                <p>{fetchError}</p>
+              </div>
+            ) : (
+              <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+                <table className="custom-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <th>Username</th>
+                      <th>Email Address</th>
+                      <th>Access Role</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usersList.filter(u => u.is_approved).map(u => {
+                      const style = getRoleBadgeStyle(u.role);
+                      return (
+                        <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.15s' }}>
+                          <td style={{ fontWeight: '600', fontSize: '0.8125rem' }}>{u.username}</td>
+                          <td style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{u.email}</td>
+                          <td>
+                            <span className="badge" style={{ backgroundColor: style.bg, color: style.text, fontSize: '0.6875rem', fontWeight: '700', textTransform: 'capitalize' }}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="badge" style={{ backgroundColor: '#e6fbf4', color: '#10b981', fontSize: '0.6875rem', fontWeight: '700' }}>
+                              Active
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right: Register form */}
