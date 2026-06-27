@@ -15,6 +15,12 @@ router.get('/', quotationController.listQuotations);
 // Route mapping for retrieving a specific quotation by ID or quote_id
 router.get('/:id', quotationController.getQuotationById);
 
+// Route mapping for updating quotation details
+router.put('/:id', quotationController.updateQuotation);
+
+// Route mapping for deleting a quotation
+router.delete('/:id', quotationController.deleteQuotation);
+
 // Route mapping for processing a quotation
 router.post('/process', quotationController.processQuotation);
 

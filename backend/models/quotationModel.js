@@ -155,6 +155,50 @@ const QuotationModel = {
         throw err;
       }
 
+      // 4. Insert quotation items in transaction
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        for (const item of data.items) {
+          let productId = item.product_id;
+          if (!productId && item.product_name) {
+            const { rows: productRows } = await client.query(
+              'SELECT id FROM products WHERE product_name = $1 LIMIT 1',
+              [item.product_name.trim()]
+            );
+            if (productRows.length > 0) {
+              productId = productRows[0].id;
+            }
+          }
+
+          const insertItemQuery = `
+            INSERT INTO quotation_items (
+              quotation_id,
+              product_id,
+              quantity,
+              unit_price,
+              total_price
+            ) VALUES ($1, $2, $3, $4, $5)
+          `;
+          const itemValues = [
+            newQuotationId,
+            productId || null,
+            parseInt(item.quantity, 10),
+            parseFloat(item.unit_price),
+            parseInt(item.quantity, 10) * parseFloat(item.unit_price)
+          ];
+
+          try {
+            await client.query(insertItemQuery, itemValues);
+          } catch (itemErr) {
+            console.error('[DB Quotation Item Insert Error] Failed to create quotation item record:', {
+              query: insertItemQuery,
+              params: itemValues,
+              message: itemErr.message
+            });
+            throw itemErr;
+          }
+        }
+      }
+
       await client.query('COMMIT');
       
       return { id: newQuotationId, quotation_number };

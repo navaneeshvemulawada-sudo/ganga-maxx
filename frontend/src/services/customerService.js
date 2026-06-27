@@ -1,20 +1,16 @@
-import { supabase } from '../supabaseClient';
+import { apiCall } from './api';
 
 /**
- * Customer management client services using Supabase database.
+ * Customer management client services calling Express backend API routes.
  */
 export const customerService = {
   /**
-   * Retrieve all customers from Supabase.
+   * Retrieve all customers from backend.
    *
    * @returns {Promise<Array>} List of customer objects.
    */
   async getAll() {
-    const { data, error } = await supabase
-      .from('customers')
-      .select('*')
-      .order('id', { ascending: false });
-    if (error) throw error;
+    const data = await apiCall('/api/customers');
     
     return data.map(d => ({
       ...d,
@@ -33,12 +29,7 @@ export const customerService = {
    * @returns {Promise<Object>} Customer object.
    */
   async getById(id) {
-    const { data, error } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) throw error;
+    const data = await apiCall(`/api/customers/${id}`);
     
     return {
       ...data,
@@ -57,44 +48,22 @@ export const customerService = {
    * @returns {Promise<Object>} Created customer object.
    */
   async create(customerData) {
-    // Look up logged in user id from public.users mapping
-    let createdBy = null;
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const u = JSON.parse(userStr);
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', u.email)
-          .single();
-        if (userData) {
-          createdBy = userData.id;
-        }
-      } catch (e) {
-        console.error('Error fetching created_by user for customer:', e);
-      }
-    }
-
     const payload = {
-      institution_name: customerData.name || customerData.institution_name || 'N/A',
-      institution_type: customerData.facility_type || customerData.institution_type || 'Corporate Office',
-      contact_person: customerData.company || customerData.contactName || customerData.contact_person || 'N/A',
+      name: customerData.name || customerData.institution_name || 'N/A',
+      facility_type: customerData.facility_type || customerData.institution_type || 'Corporate Office',
+      company: customerData.company || customerData.contactName || customerData.contact_person || 'N/A',
       email: customerData.email,
       phone: customerData.phone,
       address: customerData.address,
-      number_of_floors: parseInt(customerData.floors || customerData.number_of_floors, 10) || 1,
-      staff_count: parseInt(customerData.staff || customerData.staff_count, 10) || 0,
-      cleaning_frequency: customerData.cleaning_frequency,
-      created_by: createdBy
+      floors: parseInt(customerData.floors || customerData.number_of_floors, 10) || 1,
+      staff: parseInt(customerData.staff || customerData.staff_count, 10) || 0,
+      cleaning_frequency: customerData.cleaning_frequency
     };
 
-    const { data, error } = await supabase
-      .from('customers')
-      .insert([payload])
-      .select()
-      .single();
-    if (error) throw error;
+    const data = await apiCall('/api/customers', {
+      method: 'POST',
+      body: payload
+    });
     
     return {
       ...data,
@@ -115,27 +84,24 @@ export const customerService = {
    */
   async update(id, customerData) {
     const payload = {
-      institution_name: customerData.name,
-      institution_type: customerData.facility_type,
-      contact_person: customerData.company || customerData.contact_person,
+      name: customerData.name,
+      facility_type: customerData.facility_type,
+      company: customerData.company || customerData.contact_person,
       email: customerData.email,
       phone: customerData.phone,
       address: customerData.address,
-      number_of_floors: parseInt(customerData.floors || customerData.number_of_floors, 10) || undefined,
-      staff_count: parseInt(customerData.staff || customerData.staff_count, 10) || undefined,
+      floors: parseInt(customerData.floors || customerData.number_of_floors, 10) || undefined,
+      staff: parseInt(customerData.staff || customerData.staff_count, 10) || undefined,
       cleaning_frequency: customerData.cleaning_frequency
     };
 
     // Clean undefined values
     Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
 
-    const { data, error } = await supabase
-      .from('customers')
-      .update(payload)
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
+    const data = await apiCall(`/api/customers/${id}`, {
+      method: 'PUT',
+      body: payload
+    });
     
     return {
       ...data,
@@ -154,11 +120,9 @@ export const customerService = {
    * @returns {Promise<Object>} Confirmation response.
    */
   async delete(id) {
-    const { error } = await supabase
-      .from('customers')
-      .delete()
-      .eq('id', id);
-    if (error) throw error;
+    await apiCall(`/api/customers/${id}`, {
+      method: 'DELETE'
+    });
     return { message: 'Customer deleted successfully' };
   }
 };

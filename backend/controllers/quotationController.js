@@ -77,7 +77,8 @@ const quotationController = {
         institution_type,
         floors,
         staff_count,
-        cleaning_frequency
+        cleaning_frequency,
+        items
       } = req.body;
 
       const errors = [];
@@ -153,7 +154,8 @@ const quotationController = {
         cleaning_frequency: formattedCleaningFrequency,
         monthly_cost: monthly_cost,
         status: 'Generated',
-        generated_by: generated_by
+        generated_by: generated_by,
+        items: items
       };
 
       // 5. Save quotation to PostgreSQL database (triggers transaction & auto-id/customer generation)
@@ -387,6 +389,94 @@ const quotationController = {
       });
     } catch (error) {
       console.error('[Controller Error] Error in processQuotation:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'An internal server error occurred',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Updates an existing quotation's notes (ai_summary) or status
+   */
+  async updateQuotation(req, res) {
+    try {
+      const { id } = req.params;
+      const { notes, status } = req.body;
+
+      const fields = [];
+      const values = [];
+      let paramCount = 1;
+
+      if (notes !== undefined) {
+        fields.push(`ai_summary = $${paramCount++}`);
+        values.push(notes);
+      }
+      if (status !== undefined) {
+        fields.push(`status = $${paramCount++}`);
+        values.push(status);
+      }
+
+      if (fields.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation Error: No fields provided to update'
+        });
+      }
+
+      values.push(parseInt(id, 10));
+      const queryText = `
+        UPDATE quotations
+        SET ${fields.join(', ')}, updated_at = NOW()
+        WHERE id = $${paramCount}
+        RETURNING *
+      `;
+
+      const { rows } = await db.query(queryText, values);
+
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Quotation not found'
+        });
+      }
+
+      return res.status(200).json(rows[0]);
+
+    } catch (error) {
+      console.error('[Controller Error] Error in updateQuotation:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'An internal server error occurred',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Deletes a quotation by ID
+   */
+  async deleteQuotation(req, res) {
+    try {
+      const { id } = req.params;
+      
+      const queryText = 'DELETE FROM quotations WHERE id = $1 RETURNING id';
+      const { rows } = await db.query(queryText, [parseInt(id, 10)]);
+
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Quotation not found'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Quotation deleted successfully'
+      });
+    } catch (error) {
+      console.error('[Controller Error] Error in deleteQuotation:', error);
       return res.status(500).json({
         success: false,
         message: 'An internal server error occurred',

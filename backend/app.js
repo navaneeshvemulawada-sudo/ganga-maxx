@@ -3,6 +3,7 @@ const cors = require('cors');
 const quotationRoutes = require('./routes/quotationRoutes');
 const authRoutes = require('./routes/authRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/quotations', quotationRoutes);
 app.use('/api/quotation', quotationRoutes);
 app.use('/api/recommend', recommendationRoutes);
+app.use('/api/customers', customerRoutes);
 
 // Base Health Check
 app.get('/', (req, res) => {
