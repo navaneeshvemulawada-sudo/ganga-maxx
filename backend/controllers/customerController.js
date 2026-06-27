@@ -3,7 +3,7 @@ const db = require('../config/database');
 /**
  * Helper to extract user ID from JWT in Authorization header
  */
-function getUserIdFromAuthHeader(authHeader) {
+async function getUserIdFromAuthHeader(authHeader) {
   if (!authHeader) return null;
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') return null;
@@ -12,13 +12,43 @@ function getUserIdFromAuthHeader(authHeader) {
   if (tokenParts.length !== 3) return null;
   try {
     const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf-8'));
-    if (payload && payload.sub && payload.exp > Math.floor(Date.now() / 1000)) {
-      return parseInt(payload.sub, 10);
+    if (payload && payload.exp > Math.floor(Date.now() / 1000)) {
+      // 1. If payload.sub is a numeric ID, return it directly
+      const numericId = parseInt(payload.sub, 10);
+      if (!Number.isNaN(numericId)) {
+        return numericId;
+      }
+      
+      // 2. If it is a UUID string, look up the user ID from public.users table
+      if (payload.sub || payload.email) {
+        const { rows } = await db.query(
+          'SELECT id FROM users WHERE supabase_uid = $1 OR email = $2 LIMIT 1',
+          [payload.sub, payload.email ? payload.email.trim() : '']
+        );
+        if (rows.length > 0) {
+          return parseInt(rows[0].id, 10);
+        }
+      }
     }
   } catch (e) {
     console.warn('[JWT Extraction Warning] Failed to parse auth token:', e.message);
   }
   return null;
+}
+
+/**
+ * Validate numeric fields to prevent NaN or invalid types from reaching PostgreSQL.
+ */
+function validateNumeric(value, fieldName, nullable = true) {
+  if (value === undefined || value === null || value === '') {
+    if (nullable) return null;
+    throw new Error(`Numeric value for ${fieldName} is required and cannot be empty`);
+  }
+  const parsed = parseFloat(value);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Invalid numeric value for ${fieldName}`);
+  }
+  return parsed;
 }
 
 const customerController = {
@@ -108,7 +138,10 @@ const customerController = {
         });
       }
 
-      const created_by = getUserIdFromAuthHeader(req.headers.authorization);
+      const created_by = await getUserIdFromAuthHeader(req.headers.authorization);
+
+      const parsedFloors = validateNumeric(floors, 'floors');
+      const parsedStaff = validateNumeric(staff, 'staff');
 
       const insertQuery = `
         INSERT INTO customers (
@@ -133,8 +166,8 @@ const customerController = {
         email ? email.trim() : null,
         phone ? phone.trim() : null,
         address ? address.trim() : null,
-        floors !== undefined && floors !== null ? parseInt(floors, 10) : null,
-        staff !== undefined && staff !== null ? parseInt(staff, 10) : null,
+        parsedFloors,
+        parsedStaff,
         cleaning_frequency || null,
         created_by
       ];
@@ -206,11 +239,11 @@ const customerController = {
       }
       if (floors !== undefined) {
         fields.push(`number_of_floors = $${paramCount++}`);
-        values.push(floors !== null ? parseInt(floors, 10) : null);
+        values.push(validateNumeric(floors, 'floors'));
       }
       if (staff !== undefined) {
         fields.push(`staff_count = $${paramCount++}`);
-        values.push(staff !== null ? parseInt(staff, 10) : null);
+        values.push(validateNumeric(staff, 'staff'));
       }
       if (cleaning_frequency !== undefined) {
         fields.push(`cleaning_frequency = $${paramCount++}`);

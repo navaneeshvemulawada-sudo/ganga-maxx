@@ -1,5 +1,20 @@
 const db = require('../config/database');
 
+/**
+ * Validate numeric fields to prevent NaN or invalid types from reaching PostgreSQL.
+ */
+function validateNumeric(value, fieldName, nullable = true) {
+  if (value === undefined || value === null || value === '') {
+    if (nullable) return null;
+    throw new Error(`Invalid numeric value for ${fieldName}: value is required and cannot be empty`);
+  }
+  const parsed = parseFloat(value);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Invalid numeric value for ${fieldName}: got NaN`);
+  }
+  return parsed;
+}
+
 const QuotationModel = {
   /**
    * Generates the next quotation number (e.g. QTN-2026-1001, QTN-2026-1002, ...)
@@ -42,6 +57,17 @@ const QuotationModel = {
     const client = await db.pool.connect();
     try {
       await client.query('BEGIN');
+
+      // Validate input numeric fields before proceeding
+      const floorsVal = validateNumeric(data.floors, 'floors');
+      const staffCountVal = validateNumeric(data.staff_count, 'staff_count');
+      const generatedByVal = validateNumeric(data.generated_by, 'generated_by');
+      const monthlyCostVal = validateNumeric(data.monthly_cost, 'monthly_cost', false);
+      const totalCostVal = validateNumeric(
+        data.total_cost !== undefined && data.total_cost !== null ? data.total_cost : data.monthly_cost,
+        'total_cost',
+        false
+      );
 
       // 1. Find or create customer record
       let customerId = null;
@@ -88,12 +114,18 @@ const QuotationModel = {
           data.customer_name ? data.customer_name.trim() : null,
           data.email ? data.email.trim() : null,
           data.phone ? data.phone.trim() : null,
-          data.floors !== undefined && data.floors !== null ? parseInt(data.floors, 10) : null,
-          data.staff_count !== undefined && data.staff_count !== null ? parseInt(data.staff_count, 10) : null,
+          floorsVal,
+          staffCountVal,
           data.cleaning_frequency || null,
-          data.generated_by || null
+          generatedByVal
         ];
         
+        // Log SQL query and payload before execution
+        console.log('[SQL Execution Log] Inserting into customers table:', {
+          query: insertCustomerQuery,
+          values: customerValues
+        });
+
         try {
           const { rows: insertRows } = await client.query(insertCustomerQuery, customerValues);
           customerId = insertRows[0].id;
@@ -131,12 +163,18 @@ const QuotationModel = {
       const quotationValues = [
         quotation_number,
         customerId,
-        data.generated_by || null,
-        data.monthly_cost,
-        data.total_cost !== undefined && data.total_cost !== null ? data.total_cost : data.monthly_cost,
+        generatedByVal,
+        monthlyCostVal,
+        totalCostVal,
         data.status || 'Generated',
         data.ai_summary || null
       ];
+
+      // Log SQL query and payload before execution
+      console.log('[SQL Execution Log] Inserting into quotations table:', {
+        query: insertQuotationQuery,
+        values: quotationValues
+      });
 
       let newQuotationId;
       try {
@@ -169,6 +207,11 @@ const QuotationModel = {
             }
           }
 
+          // Validate item numeric inputs
+          const qtyVal = validateNumeric(item.quantity, 'item quantity', false);
+          const priceVal = validateNumeric(item.unit_price, 'item unit_price', false);
+          const totalVal = qtyVal * priceVal;
+
           const insertItemQuery = `
             INSERT INTO quotation_items (
               quotation_id,
@@ -181,10 +224,16 @@ const QuotationModel = {
           const itemValues = [
             newQuotationId,
             productId || null,
-            parseInt(item.quantity, 10),
-            parseFloat(item.unit_price),
-            parseInt(item.quantity, 10) * parseFloat(item.unit_price)
+            qtyVal,
+            priceVal,
+            totalVal
           ];
+
+          // Log SQL query and payload before execution
+          console.log('[SQL Execution Log] Inserting into quotation_items table:', {
+            query: insertItemQuery,
+            values: itemValues
+          });
 
           try {
             await client.query(insertItemQuery, itemValues);

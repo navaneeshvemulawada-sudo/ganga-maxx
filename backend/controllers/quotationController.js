@@ -36,9 +36,9 @@ function calculateMonthlyCost(institutionType, cleaningFrequency) {
 /**
  * Helper to extract user ID (sub) from JWT in Authorization header
  * @param {string} authHeader - The Authorization header value
- * @returns {number|null} User ID or null if not found/invalid
+ * @returns {Promise<number|null>} User ID or null if not found/invalid
  */
-function getUserIdFromAuthHeader(authHeader) {
+async function getUserIdFromAuthHeader(authHeader) {
   if (!authHeader) return null;
   
   const parts = authHeader.split(' ');
@@ -54,13 +54,43 @@ function getUserIdFromAuthHeader(authHeader) {
 
   try {
     const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString('utf-8'));
-    if (payload && payload.sub && payload.exp > Math.floor(Date.now() / 1000)) {
-      return parseInt(payload.sub, 10);
+    if (payload && payload.exp > Math.floor(Date.now() / 1000)) {
+      // 1. If payload.sub is a numeric ID, return it directly
+      const numericId = parseInt(payload.sub, 10);
+      if (!Number.isNaN(numericId)) {
+        return numericId;
+      }
+      
+      // 2. If it is a UUID string, look up the user ID from public.users table
+      if (payload.sub || payload.email) {
+        const { rows } = await db.query(
+          'SELECT id FROM users WHERE supabase_uid = $1 OR email = $2 LIMIT 1',
+          [payload.sub, payload.email ? payload.email.trim() : '']
+        );
+        if (rows.length > 0) {
+          return parseInt(rows[0].id, 10);
+        }
+      }
     }
   } catch (e) {
     console.warn('[JWT Auth Extraction Warning] Failed to parse auth token:', e.message);
   }
   return null;
+}
+
+/**
+ * Validate numeric fields to prevent NaN or invalid types from reaching PostgreSQL.
+ */
+function validateNumeric(value, fieldName, nullable = true) {
+  if (value === undefined || value === null || value === '') {
+    if (nullable) return null;
+    throw new Error(`Numeric value for ${fieldName} is required and cannot be empty`);
+  }
+  const parsed = parseFloat(value);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Invalid numeric value for ${fieldName}`);
+  }
+  return parsed;
 }
 
 const quotationController = {
@@ -140,7 +170,11 @@ const quotationController = {
       }
 
       // Extract generated_by from auth token if present
-      const generated_by = getUserIdFromAuthHeader(req.headers.authorization);
+      const generated_by = await getUserIdFromAuthHeader(req.headers.authorization);
+
+      const parsedFloors = validateNumeric(floors, 'floors');
+      const parsedStaffCount = validateNumeric(staff_count, 'staff_count');
+      const parsedMonthlyCost = validateNumeric(monthly_cost, 'monthly_cost', false);
 
       // 4. Prepare data for model insertion
       const quotationData = {
@@ -149,10 +183,10 @@ const quotationController = {
         email: email.trim(),
         phone: phone ? phone.trim() : null,
         institution_type: formattedInstitutionType,
-        floors: floors !== undefined && floors !== null ? parseInt(floors, 10) : null,
-        staff_count: staff_count !== undefined && staff_count !== null ? parseInt(staff_count, 10) : null,
+        floors: parsedFloors,
+        staff_count: parsedStaffCount,
         cleaning_frequency: formattedCleaningFrequency,
-        monthly_cost: monthly_cost,
+        monthly_cost: parsedMonthlyCost,
         status: 'Generated',
         generated_by: generated_by,
         items: items
