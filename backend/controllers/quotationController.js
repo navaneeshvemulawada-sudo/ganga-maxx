@@ -1,5 +1,4 @@
 const QuotationModel = require('../models/quotationModel');
-const WebhookService = require('../services/webhookService');
 const db = require('../config/database');
 
 // Define pricing rules
@@ -165,10 +164,7 @@ const quotationController = {
       quotationData.quotation_number = quotation_number;
       quotationData.quote_id = quotation_number; // fallback for webhook / compatibility
 
-      // 6. Trigger webhook asynchronously
-      WebhookService.triggerQuotationCreated(quotationData).catch(err => {
-        console.error('[Webhook Async Error] Error triggering n8n webhook:', err);
-      });
+
 
       // 7. Send Response
       return res.status(201).json({
@@ -336,6 +332,8 @@ const quotationController = {
       });
     }
   },
+
+
 
   /**
    * Processes a quotation status (updates status)
