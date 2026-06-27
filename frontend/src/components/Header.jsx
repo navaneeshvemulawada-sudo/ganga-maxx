@@ -1,13 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, Bell, Sun, Moon, Sparkles } from 'lucide-react';
+import { Bell, Sun, Moon, Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { apiCall } from '../services/api';
 import authService from '../services/authService';
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
-  const searchInputRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -157,17 +156,7 @@ export default function Header() {
     }
   };
 
-  // Listen for global shortcut (Ctrl+K or Cmd+K)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+
 
   const getPageTitle = (path) => {
     if (path === '/' || path === '') return 'Dashboard';
@@ -204,58 +193,7 @@ export default function Header() {
         <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{pageTitle}</span>
       </div>
 
-      {/* Centered Pill Search Input */}
-      <div style={{ position: 'relative', width: '380px', margin: '0 2rem' }}>
-        <Search size={16} style={{
-          position: 'absolute',
-          left: '14px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          color: 'var(--text-muted)'
-        }} />
-        <input
-          ref={searchInputRef}
-          type="text"
-          placeholder="Search customers, products, quotations..."
-          style={{
-            width: '100%',
-            padding: '8px 45px 8px 38px',
-            height: '38px',
-            fontSize: '0.8125rem',
-            borderRadius: '9999px',
-            border: '1px solid var(--border-color)',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-primary)',
-            outline: 'none',
-            transition: 'all 0.2s'
-          }}
-          className="search-pill-input"
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border-focus)';
-            e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border-color)';
-            e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-          }}
-        />
-        <kbd style={{
-          position: 'absolute',
-          right: '14px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          backgroundColor: 'var(--bg-secondary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '4px',
-          padding: '2px 5px',
-          fontSize: '0.65rem',
-          color: 'var(--text-muted)',
-          fontFamily: 'var(--font-sans)',
-          pointerEvents: 'none'
-        }}>
-          ⌘K
-        </kbd>
-      </div>
+
 
       {/* Right control utilities */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
