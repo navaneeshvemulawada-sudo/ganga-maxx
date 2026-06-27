@@ -9,8 +9,8 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const [username, setUsername] = useState(location.state?.email || 'demo@cleanbundle.ai');
-  const [password, setPassword] = useState('Demo@1234');
+  const [username, setUsername] = useState(location.state?.email || '');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
@@ -193,7 +193,7 @@ export default function Login() {
                   type="text"
                   className="form-input"
                   style={{ paddingLeft: '42px', height: '44px' }}
-                  placeholder="demo@cleanbundle.ai"
+                  placeholder="email@example.com"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
@@ -254,17 +254,7 @@ export default function Login() {
           </form>
         </div>
 
-        {/* Demo info credentials */}
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem', lineHeights: '1.4' }}>
-          <div style={{ fontWeight: '700', marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>Demo Accounts (Password: Demo@1234):</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem 1rem' }}>
-            <span>Admin: <strong style={{ color: 'var(--text-secondary)' }}>demo@cleanbundle.ai</strong></span>
-            <span>Client: <strong style={{ color: 'var(--text-secondary)' }}>client@cleanbundle.ai</strong></span>
-            <span>Operations: <strong style={{ color: 'var(--text-secondary)' }}>operations@cleanbundle.ai</strong></span>
-            <span>Supervisor: <strong style={{ color: 'var(--text-secondary)' }}>supervisor@cleanbundle.ai</strong></span>
-            <span>Distributor: <strong style={{ color: 'var(--text-secondary)' }}>distributor@cleanbundle.ai</strong></span>
-          </div>
-        </div>
+
 
       </div>
 

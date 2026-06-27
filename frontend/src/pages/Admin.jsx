@@ -28,12 +28,7 @@ export default function Admin() {
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Default seeded users for display
-  const [usersList, setUsersList] = useState([
-    { id: 1, username: 'partner', email: 'demo@cleanbundle.ai', role: 'partner' },
-    { id: 2, username: 'customer', email: 'sales@cleanbundle.ai', role: 'customer' },
-    { id: 3, username: 'manager', email: 'manager@cleanbundle.ai', role: 'manager' },
-    { id: 4, username: 'supervisor', email: 'supervisor@cleanbundle.ai', role: 'supervisor' }
-  ]);
+  const [usersList, setUsersList] = useState([]);
 
   const handleSettingsChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -280,7 +275,7 @@ export default function Admin() {
                   type="email"
                   name="email"
                   className="form-input"
-                  placeholder="e.g. user@cleanbundle.ai"
+                  placeholder="email@example.com"
                   style={{ height: '36px', fontSize: '0.8125rem' }}
                   value={userForm.email}
                   onChange={handleUserInputChange}

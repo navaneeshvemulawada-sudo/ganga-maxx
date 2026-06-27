@@ -320,7 +320,7 @@ export default function AdminUsers() {
                 type="email"
                 name="email"
                 className="form-input"
-                placeholder="e.g. user@cleanbundle.ai"
+                placeholder="email@example.com"
                 style={{ height: '36px', fontSize: '0.8125rem' }}
                 value={userForm.email}
                 onChange={handleUserInputChange}
