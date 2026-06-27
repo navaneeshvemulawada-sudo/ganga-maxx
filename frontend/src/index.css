@@ -705,6 +705,24 @@ a:hover {
   .login-left-pane {
     flex: 1 1 100% !important;
     padding: 3rem 2rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.06) 0%, var(--bg-primary) 100%) !important;
+  }
+  .login-logo-container {
+    align-self: center !important;
+  }
+  .login-form-container {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-lg) !important;
+    padding: 2.5rem 2rem !important;
+    margin: 1.5rem 0 0 0 !important;
+    width: 100% !important;
+    max-width: 440px !important;
   }
 }
 
@@ -732,6 +750,9 @@ a:hover {
   }
   .login-left-pane {
     padding: 2.5rem 1.25rem !important;
+  }
+  .login-form-container {
+    padding: 1.75rem 1.25rem !important;
   }
 }
 

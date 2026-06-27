@@ -59,7 +59,7 @@ export default function Login() {
         overflowY: 'auto'
       }}>
         {/* Logo header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="login-logo-container" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div style={{
             background: 'linear-gradient(135deg, #1e40af 0%, #06b6d4 100%)',
             width: '32px',
@@ -83,7 +83,7 @@ export default function Login() {
         </div>
 
         {/* Form content */}
-        <div style={{ margin: '2rem 0', maxWidth: '420px', width: '100%' }}>
+        <div className="login-form-container" style={{ margin: '2rem 0', maxWidth: '420px', width: '100%' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
             WELCOME BACK
           </span>
