@@ -113,7 +113,8 @@ export default function Login() {
         padding: '3rem 4rem',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
+        gap: '4rem',
         backgroundColor: 'var(--bg-secondary)',
         overflowY: 'auto'
       }}>
