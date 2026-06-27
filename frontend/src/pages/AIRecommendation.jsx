@@ -206,6 +206,13 @@ export default function AIRecommendation() {
       sessionStorage.removeItem('wizard_inputs');
       sessionStorage.removeItem('ai_recommendation');
 
+      // Show success or warning message based on webhook response
+      if (quotation.webhook_success === false) {
+        alert(quotation.message || 'Quotation was created successfully, but the email could not be sent.');
+      } else {
+        alert(quotation.message || 'Quotation created and emailed successfully!');
+      }
+
       // Navigate to quotations details page
       navigate(`/quotations/${quotation.id}`);
     } catch (err) {

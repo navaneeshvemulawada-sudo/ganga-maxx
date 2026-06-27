@@ -1,5 +1,6 @@
 const QuotationModel = require('../models/quotationModel');
 const db = require('../config/database');
+const axios = require('axios');
 
 // Define pricing rules
 const pricingRules = {
@@ -200,15 +201,70 @@ const quotationController = {
       quotationData.quotation_number = quotation_number;
       quotationData.quote_id = quotation_number; // fallback for webhook / compatibility
 
+      // 6. Trigger n8n Production Webhook
+      const subtotal = Array.isArray(items) && items.length > 0 
+        ? items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) * parseFloat(item.unit_price)), 0)
+        : parseFloat(monthly_cost);
+      
+      const selectedProducts = (items || []).map(item => ({
+        productName: item.product_name,
+        quantity: parseInt(item.quantity, 10),
+        unitPrice: parseFloat(item.unit_price),
+        lineTotal: parseInt(item.quantity, 10) * parseFloat(item.unit_price)
+      }));
 
+      const webhookPayload = {
+        quotationId: id,
+        quotationNumber: quotation_number,
+        customerName: customer_name.trim(),
+        customerEmail: email.trim(),
+        customerPhone: phone ? phone.trim() : '',
+        companyName: company_name ? company_name.trim() : (customer_name.trim() || 'N/A'),
+        quotationDate: new Date().toISOString().split('T')[0],
+        subtotal: subtotal,
+        GST: parseFloat((subtotal * 0.18).toFixed(2)),
+        totalAmount: parseFloat((subtotal * 1.18).toFixed(2)),
+        selectedProducts: selectedProducts,
+        floors: parsedFloors,
+        staffCount: parsedStaffCount,
+        cleaningFrequency: formattedCleaningFrequency,
+        institutionType: formattedInstitutionType
+      };
+
+      let webhookSuccess = true;
+      let webhookErrorMessage = '';
+
+      try {
+        await axios.post('http://localhost:5678/webhook/quotation-created', webhookPayload, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000 // 10s timeout
+        });
+      } catch (webhookError) {
+        console.error('[Webhook Error] Failed to call n8n production webhook:', webhookError.message);
+        webhookSuccess = false;
+        webhookErrorMessage = webhookError.message;
+      }
 
       // 7. Send Response
+      if (!webhookSuccess) {
+        return res.status(201).json({
+          success: true,
+          webhook_success: false,
+          message: 'Quotation was created successfully, but the email could not be sent.',
+          id: id,
+          quotation_number: quotation_number,
+          quote_id: quotation_number,
+          webhook_error: webhookErrorMessage
+        });
+      }
+
       return res.status(201).json({
         success: true,
-        message: 'Quotation created successfully',
+        webhook_success: true,
+        message: 'Quotation created and emailed successfully',
         id: id,
         quotation_number: quotation_number,
-        quote_id: quotation_number // fallback for backward compatibility
+        quote_id: quotation_number
       });
 
     } catch (error) {
