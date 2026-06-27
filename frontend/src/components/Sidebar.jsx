@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
+  X,
   LayoutDashboard,
   Users,
   FilePlus,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 import authService from '../services/authService';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const user = authService.getCurrentUser() || { username: 'Demo Admin', role: 'admin' };
 
@@ -75,7 +76,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside style={{
+    <aside className={`sidebar-container ${isOpen ? 'open' : ''}`} style={{
       width: '260px',
       backgroundColor: 'var(--sidebar-bg)',
       borderRight: '1px solid var(--sidebar-border)',
@@ -89,38 +90,57 @@ export default function Sidebar() {
         padding: '1.5rem 1.25rem',
         display: 'flex',
         alignItems: 'center',
-        gap: '0.75rem',
+        justifyContent: 'space-between',
         borderBottom: '1px solid var(--sidebar-border)'
       }}>
-        <div style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #0284c7 100%)',
-          width: '36px',
-          height: '36px',
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#fff'
-        }}>
-          <Sparkles size={20} />
-        </div>
-        <div>
-          <h2 style={{
-            fontSize: '1.125rem',
-            fontWeight: '800',
-            color: 'var(--text-primary)',
-            fontFamily: 'var(--font-heading)',
-            letterSpacing: '0.2px',
-            lineHeight: '1.2',
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #0284c7 100%)',
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff'
           }}>
-            CleanBundle
-          </h2>
-          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>
-            AI QUOTATION SUITE
-          </span>
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <h2 style={{
+              fontSize: '1.125rem',
+              fontWeight: '800',
+              color: 'var(--text-primary)',
+              fontFamily: 'var(--font-heading)',
+              letterSpacing: '0.2px',
+              lineHeight: '1.2'
+            }}>
+              CleanBundle
+            </h2>
+            <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>
+              AI QUOTATION SUITE
+            </span>
+          </div>
         </div>
+
+        {/* Close button visible on mobile */}
+        <button 
+          className="sidebar-close-btn"
+          onClick={onClose}
+          style={{
+            display: 'none',
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            padding: '6px',
+            borderRadius: '6px',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Navigation menu list */}

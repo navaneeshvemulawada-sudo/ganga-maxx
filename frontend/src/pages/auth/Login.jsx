@@ -108,7 +108,7 @@ export default function Login() {
     }}>
       
       {/* Left Pane - Authentication Form */}
-      <div style={{
+      <div className="login-left-pane" style={{
         flex: '0 0 45%',
         padding: '3rem 4rem',
         display: 'flex',
@@ -260,7 +260,7 @@ export default function Login() {
       </div>
 
       {/* Right Pane - Visual showcase */}
-      <div style={{
+      <div className="login-right-pane" style={{
         flex: '1',
         backgroundImage: `url(${bgImage})`,
         backgroundSize: 'cover',

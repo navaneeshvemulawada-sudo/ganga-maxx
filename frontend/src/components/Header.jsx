@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Sun, Moon, Sparkles } from 'lucide-react';
+import { Menu, Bell, Sun, Moon, Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { apiCall } from '../services/api';
 import authService from '../services/authService';
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -176,7 +176,7 @@ export default function Header() {
   const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <header style={{
+    <header className="header-container" style={{
       height: '70px',
       backgroundColor: 'var(--bg-secondary)',
       borderBottom: '1px solid var(--border-color)',
@@ -187,10 +187,30 @@ export default function Header() {
       flexShrink: 0
     }}>
       {/* Breadcrumbs Nav Section */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-        <span style={{ color: 'var(--text-muted)' }}>CleanBundle</span>
-        <span style={{ color: 'var(--text-muted)' }}>&gt;</span>
-        <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{pageTitle}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <button 
+          className="header-menu-btn" 
+          onClick={onMenuClick}
+          style={{
+            display: 'none',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            padding: '6px',
+            borderRadius: '6px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: '0.25rem'
+          }}
+        >
+          <Menu size={22} />
+        </button>
+        <div className="header-breadcrumbs" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          <span style={{ color: 'var(--text-muted)' }}>CleanBundle</span>
+          <span style={{ color: 'var(--text-muted)' }}>&gt;</span>
+        </div>
+        <span style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.875rem' }}>{pageTitle}</span>
       </div>
 
 
@@ -224,7 +244,7 @@ export default function Header() {
           }}
         >
           <Sparkles size={14} />
-          <span>AI Assistant</span>
+          <span className="header-btn-text">AI Assistant</span>
         </button>
 
         {/* Notifications Bell */}
