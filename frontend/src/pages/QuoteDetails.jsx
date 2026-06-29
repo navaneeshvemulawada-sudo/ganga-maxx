@@ -111,28 +111,64 @@ export default function QuoteDetails() {
   const handleExportCSV = () => {
     if (!quote) return;
     const headers = ['Product Name', 'Quantity', 'Unit Price', 'Line Total'];
-    const rows = editingItems.map(item => [
-      `"${item.product_name}"`,
+    const itemsToExport = editingItems && editingItems.length > 0 ? editingItems : (quote.items || []);
+    
+    const rows = itemsToExport.map(item => [
+      `"${(item.product_name || '').replace(/"/g, '""')}"`,
       item.quantity,
       item.unit_price,
-      item.quantity * item.unit_price
+      (item.quantity * item.unit_price).toFixed(2)
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `Quotation_${quote.quotation_number || quote.quote_id}.csv`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const fallbackCopyTextToClipboard = (text) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        alert('Link copied to clipboard! Share it with procurement partners.');
+      } else {
+        alert('Unable to copy link to clipboard.');
+      }
+    } catch (err) {
+      alert('Fallback: Oops, unable to copy link: ' + err.message);
+    }
+    document.body.removeChild(textArea);
   };
 
   const handleShareLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert('Link copied to clipboard! Share it with procurement partners.');
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url)
+          .then(() => alert('Link copied to clipboard! Share it with procurement partners.'))
+          .catch(() => fallbackCopyTextToClipboard(url));
+      } else {
+        fallbackCopyTextToClipboard(url);
+      }
+    } catch (err) {
+      alert('Failed to copy link: ' + err.message);
+    }
   };
 
   const handlePrint = () => {
@@ -172,7 +208,7 @@ export default function QuoteDetails() {
   return (
     <div className="animate-fade">
       {/* Print-Only Header Block */}
-      <div className="print-only-header" style={{ display: 'none' }}>
+      <div className="print-only-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '1.5rem', marginBottom: '2rem' }}>
           <div>
             <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0, color: '#0f172a', fontFamily: 'var(--font-heading)' }}>CleanBundle</h1>

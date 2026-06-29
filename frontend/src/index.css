@@ -542,7 +542,8 @@ a:hover {
 }
 
 /* Print Helper Classes */
-.print-only {
+.print-only,
+.print-only-header {
   display: none !important;
 }
 
