@@ -202,21 +202,64 @@ export default function AIRecommendation() {
 
       const quotation = await quotationService.create(quotePayload);
       
+      // 4. Send POST request to n8n Production Webhook
+      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
+      if (!webhookUrl) {
+        throw new Error('n8n Webhook URL is not configured in the environment (VITE_N8N_WEBHOOK_URL).');
+      }
+
+      const quoteId = quotation.quotation_number || quotation.quote_id || String(quotation.id);
+
+      const n8nPayload = {
+        quote: {
+          quote_id: quoteId,
+          customer_name: inputs.name,
+          email: inputs.email || `${inputs.name.toLowerCase().replace(/\s+/g, '')}@cleanbundle.ai`,
+          institution_type: inputs.facility_type,
+          floors: parseInt(inputs.floors, 10) || 1,
+          staff_count: parseInt(inputs.staff_count, 10) || 0,
+          cleaning_frequency: inputs.cleaning_frequency,
+          bundle_name: recs.bundle_name || "AI Optimized Cleaning Bundle",
+          monthly_cost: liveSubtotal,
+          quotation_status: "Generated"
+        },
+        fileName: `Quotation_${quoteId}.pdf`,
+        emailSubject: `Your quotation ${quoteId} from Ganga Maxx`,
+        emailText: `Dear ${inputs.name},\n\nPlease find your quotation attached.\n\nRegards,\nGanga Maxx`
+      };
+
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(n8nPayload)
+      });
+
+      if (!webhookResponse.ok) {
+        let errorMsg = `HTTP error! Status: ${webhookResponse.status}`;
+        try {
+          const errData = await webhookResponse.json();
+          errorMsg = errData.message || errData.error || JSON.stringify(errData);
+        } catch {
+          try {
+            const txt = await webhookResponse.text();
+            if (txt) errorMsg = txt;
+          } catch {}
+        }
+        throw new Error(errorMsg);
+      }
+
       // Clean wizard session data
       sessionStorage.removeItem('wizard_inputs');
       sessionStorage.removeItem('ai_recommendation');
 
-      // Show success or warning message based on webhook response
-      if (quotation.webhook_success === false) {
-        alert(quotation.message || 'Quotation was created successfully, but the email could not be sent.');
-      } else {
-        alert(quotation.message || 'Quotation created and emailed successfully!');
-      }
+      alert('Quotation generated successfully.');
 
       // Navigate to quotations details page
       navigate(`/quotations/${quotation.id}`);
     } catch (err) {
-      alert('Failed to build quotation: ' + err.message);
+      alert('Failed to generate quotation: ' + err.message);
     } finally {
       setBuilding(false);
     }
@@ -247,7 +290,7 @@ export default function AIRecommendation() {
           disabled={building}
         >
           <Check size={16} />
-          <span>{building ? 'Building Quotation...' : 'Build Draft Quotation'}</span>
+          <span>{building ? 'Generating Quotation...' : 'Generate Quotation'}</span>
         </button>
       </div>
 
