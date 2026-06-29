@@ -214,6 +214,7 @@ const quotationController = {
       }));
 
       const webhookPayload = {
+        // Original backend fields (to keep existing behavior intact)
         quotationId: id,
         quotationNumber: quotation_number,
         customerName: customer_name.trim(),
@@ -228,7 +229,46 @@ const quotationController = {
         floors: parsedFloors,
         staffCount: parsedStaffCount,
         cleaningFrequency: formattedCleaningFrequency,
-        institutionType: formattedInstitutionType
+        institutionType: formattedInstitutionType,
+
+        // Root-level fields expected by n8n workflow
+        quote_id: quotation_number,
+        customer_name: customer_name.trim(),
+        email: email.trim(),
+        institution_type: formattedInstitutionType,
+        floors: parsedFloors,
+        staff_count: parsedStaffCount,
+        cleaning_frequency: formattedCleaningFrequency,
+        bundle_name: "AI Optimized Cleaning Bundle",
+        monthly_cost: subtotal,
+        quotation_status: "Generated",
+        items: (items || []).map(item => ({
+          product_name: item.product_name,
+          quantity: parseInt(item.quantity, 10),
+          unit_price: parseFloat(item.unit_price)
+        })),
+        fileName: `Quotation_${quotation_number}.pdf`,
+        emailSubject: `Your quotation ${quotation_number} from Ganga Maxx`,
+        emailText: `Dear ${customer_name.trim()},\n\nPlease find your quotation attached.\n\nRegards,\nGanga Maxx`,
+
+        // Nested quote object (for fallback compatibility)
+        quote: {
+          quote_id: quotation_number,
+          customer_name: customer_name.trim(),
+          email: email.trim(),
+          institution_type: formattedInstitutionType,
+          floors: parsedFloors,
+          staff_count: parsedStaffCount,
+          cleaning_frequency: formattedCleaningFrequency,
+          bundle_name: "AI Optimized Cleaning Bundle",
+          monthly_cost: subtotal,
+          quotation_status: "Generated",
+          items: (items || []).map(item => ({
+            product_name: item.product_name,
+            quantity: parseInt(item.quantity, 10),
+            unit_price: parseFloat(item.unit_price)
+          }))
+        }
       };
 
       let webhookSuccess = true;

@@ -211,6 +211,23 @@ export default function AIRecommendation() {
       const quoteId = quotation.quotation_number || quotation.quote_id || String(quotation.id);
 
       const n8nPayload = {
+        // Root-level fields (expected by flat parsing workflows)
+        quote_id: quoteId,
+        customer_name: inputs.name,
+        email: inputs.email || `${inputs.name.toLowerCase().replace(/\s+/g, '')}@cleanbundle.ai`,
+        institution_type: inputs.facility_type,
+        floors: parseInt(inputs.floors, 10) || 1,
+        staff_count: parseInt(inputs.staff_count, 10) || 0,
+        cleaning_frequency: inputs.cleaning_frequency,
+        bundle_name: recs.bundle_name || "AI Optimized Cleaning Bundle",
+        monthly_cost: liveSubtotal,
+        quotation_status: "Generated",
+        items: quotationItems,
+        fileName: `Quotation_${quoteId}.pdf`,
+        emailSubject: `Your quotation ${quoteId} from Ganga Maxx`,
+        emailText: `Dear ${inputs.name},\n\nPlease find your quotation attached.\n\nRegards,\nGanga Maxx`,
+
+        // Nested quote object (for fallback / backward compatibility)
         quote: {
           quote_id: quoteId,
           customer_name: inputs.name,
@@ -221,11 +238,9 @@ export default function AIRecommendation() {
           cleaning_frequency: inputs.cleaning_frequency,
           bundle_name: recs.bundle_name || "AI Optimized Cleaning Bundle",
           monthly_cost: liveSubtotal,
-          quotation_status: "Generated"
-        },
-        fileName: `Quotation_${quoteId}.pdf`,
-        emailSubject: `Your quotation ${quoteId} from Ganga Maxx`,
-        emailText: `Dear ${inputs.name},\n\nPlease find your quotation attached.\n\nRegards,\nGanga Maxx`
+          quotation_status: "Generated",
+          items: quotationItems
+        }
       };
 
       const webhookResponse = await fetch(webhookUrl, {
